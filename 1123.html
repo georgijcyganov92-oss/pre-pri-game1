@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ПРЕ-ПРИ Мастер PRO</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --boss: #7c3aed;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --bg-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --glass: rgba(255, 255, 255, 0.98);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-main);
+            padding: 20px;
+        }
+
+        /* Основная карточка */
+        .app-card {
+            background: var(--glass);
+            width: 100%;
+            max-width: 480px;
+            padding: 2.5rem 1.5rem 1.5rem;
+            border-radius: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3);
+            text-align: center;
+            position: relative;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+
+        /* Кнопка выхода из игры */
+        .exit-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #f1f5f9;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        .exit-btn:hover { background: #fee2e2; color: var(--danger); }
+
+        /* Заголовки */
+        h1 { font-size: 1.8rem; margin-bottom: 0.5rem; background: linear-gradient(to right, var(--primary), var(--boss)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .subtitle { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; }
+
+        /* Сетка режимов */
+        .mode-list { display: flex; flex-direction: column; gap: 12px; }
+
+        .mode-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background: #fff;
+            border: 2px solid #f1f5f9;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            position: relative;
+        }
+
+        .mode-item:hover { border-color: var(--primary-light); transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
+        .mode-item.active { border-color: var(--primary); background: #f5f3ff; }
+
+        .mode-icon { font-size: 1.8rem; margin-right: 16px; }
+        .mode-info h3 { font-size: 1rem; margin-bottom: 2px; }
+        .mode-info p { font-size: 0.8rem; color: var(--text-muted); }
+
+        .best-badge {
+            margin-left: auto;
+            background: #eef2ff;
+            color: var(--primary);
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        /* Игровая зона */
+        .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; margin-top: 10px; }
+        .stat-pill { background: #f8fafc; padding: 6px 14px; border-radius: 14px; font-weight: 700; font-size: 0.9rem; border: 1px solid #f1f5f9; }
+
+        .word-box {
+            background: #fff;
+            border: 4px solid #f8fafc;
+            padding: 3rem 1rem;
+            border-radius: 24px;
+            margin: 20px 0;
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .word-text { font-size: 2.5rem; font-weight: 900; letter-spacing: 1px; }
+        .word-text span { color: var(--primary); text-decoration: underline; text-underline-offset: 8px; }
+
+        /* Кнопки ответов */
+        .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: auto; }
+        .btn-choice {
+            padding: 1.2rem;
+            font-size: 1.6rem;
+            font-weight: 800;
+            border-radius: 20px;
+            border: none;
+            background: #f1f5f9;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-main);
+        }
+        .btn-choice:hover:not(:disabled) { background: var(--primary); color: white; transform: scale(1.05); }
+        .btn-choice:disabled { opacity: 0.6; }
+
+        .correct { background: var(--success) !important; color: white !important; }
+        .wrong { background: var(--danger) !important; color: white !important; }
+
+        /* Фидбек */
+        .feedback {
+            margin-top: 1.5rem;
+            padding: 1.2rem;
+            border-radius: 20px;
+            background: #f8fafc;
+            animation: popIn 0.3s ease;
+        }
+        .feedback h4 { margin-bottom: 4px; }
+        .hint { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
+
+        /* Утилиты */
+        .hidden { display: none !important; }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            padding: 1rem;
+            border-radius: 16px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+            font-size: 1rem;
+        }
+        .btn-primary:hover { background: var(--primary-dark); }
+
+        /* Анимации */
+        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        /* Эффекты для босса и комбо */
+        .boss-mode { border-color: var(--boss) !important; background: #faf5ff !important; box-shadow: 0 0 20px rgba(124, 58, 237, 0.2); }
+        .boss-label { background: var(--boss); color: white; padding: 4px 12px; border-radius: 8px; font-size: 0.7rem; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); font-weight: 800; }
+        
+        .timer-warn { color: var(--danger); animation: shake 0.5s infinite; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+    </style>
+</head>
+<body>
+
+<div class="app-card">
+    <button id="exit-game" class="exit-btn hidden" onclick="confirmExit()" title="Выйти в меню">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+    </button>
+
+    <div id="screen-menu">
+        <h1>ПРЕ или ПРИ?</h1>
+        <p class="subtitle">Мастерство русской орфографии</p>
+        
+        <div class="mode-list">
+            <div class="mode-item active" onclick="setMode('classic', this)">
+                <div class="mode-icon">❤️</div>
+                <div class="mode-info">
+                    <h3>Классика</h3>
+                    <p>3 жизни. Традиционный тест.</p>
+                </div>
+                <div class="best-badge" id="rec-classic">0</div>
+            </div>
+
+            <div class="mode-item" onclick="setMode('combo', this)">
+                <div class="mode-icon">🔥</div>
+                <div class="mode-info">
+                    <h3>Комбо-мастер</h3>
+                    <p>Серия без права на ошибку.</p>
+                </div>
+                <div class="best-badge" id="rec-combo">0</div>
+            </div>
+
+            <div class="mode-item" onclick="setMode('boss', this)">
+                <div class="mode-icon">👾</div>
+                <div class="mode-info">
+                    <h3>Битва с боссами</h3>
+                    <p>Сложные слова каждые 5 ходов.</p>
+                </div>
+                <div class="best-badge" id="rec-boss">0</div>
+            </div>
+
+            <div class="mode-item" onclick="setMode('time', this)">
+                <div class="mode-icon">⏳</div>
+                <div class="mode-info">
+                    <h3>ЕГЭ-забег</h3>
+                    <p>20 секунд. Скорость решает!</p>
+                </div>
+                <div class="best-badge" id="rec-time">0</div>
+            </div>
+        </div>
+
+        <button class="btn-primary" style="margin-top: 2rem;" onclick="startNewGame()">ИГРАТЬ</button>
+    </div>
+
+    <div id="screen-game" class="hidden">
+        <div class="game-header">
+            <div id="lives-box" class="stat-pill">❤️❤️❤️</div>
+            <div id="timer-box" class="stat-pill hidden">00:20</div>
+            <div class="stat-pill">Счёт: <span id="score-val">0</span></div>
+        </div>
+
+        <div id="combo-title" style="font-weight: 800; color: var(--warning); height: 20px; font-size: 0.8rem;"></div>
+
+        <div class="word-box" id="word-box">
+            <div id="boss-tag" class="boss-label hidden">БОСС</div>
+            <div class="word-text" id="word-display">пр<span>_</span>вратить</div>
+        </div>
+
+        <div class="choices">
+            <button class="btn-choice" id="btn-е" onclick="handleAnswer('е')">Е</button>
+            <button class="btn-choice" id="btn-и" onclick="handleAnswer('и')">И</button>
+        </div>
+
+        <div id="feedback" class="feedback hidden">
+            <h4 id="fb-title">Верно!</h4>
+            <p id="fb-hint" class="hint"></p>
+            <button class="btn-primary" onclick="nextStep()">Далее</button>
+        </div>
+    </div>
+
+    <div id="screen-results" class="hidden">
+        <h2 id="res-status">Раунд окончен</h2>
+        <div id="res-rank" style="font-size: 4rem; font-weight: 900; margin: 20px 0; color: var(--warning);">S</div>
+        
+        <div style="background: #f8fafc; border-radius: 20px; padding: 1.5rem; margin-bottom: 20px;">
+            <p>Очки: <b id="res-score">0</b></p>
+            <p>Точность: <b id="res-acc">0%</b></p>
+            <p id="res-extra"></p>
+        </div>
+
+        <button class="btn-primary" onclick="showMenu()">В МЕНЮ</button>
+    </div>
+</div>
+
+<script>
+    // База слов
+    const dictionary = [
+        { m: "пр_зидент", a: "е", f: "президент", h: "Словарное слово." },
+        { m: "пр_вилегия", a: "и", f: "привилегия", h: "Словарное слово.", b: true },
+        { m: "пр_пятствие", a: "е", f: "препятствие", h: "Близко к значению 'пере-' (преграда)." },
+        { m: "пр_оритет", a: "и", f: "приоритет", h: "Словарное слово.", b: true },
+        { m: "пр_кратить", a: "е", f: "прекратить", h: "Близко к 'пере-'." },
+        { m: "пр_лежный", a: "и", f: "прилежный", h: "Словарное слово." },
+        { m: "пр_небрегать", a: "е", f: "пренебрегать", h: "Словарное слово.", b: true },
+        { m: "пр_вратить", a: "е", f: "превратить", h: "Переменить (пере-)." },
+        { m: "пр_выкнуть", a: "и", f: "привыкнуть", h: "Доведение действия до конца." },
+        { m: "пр_имущество", a: "е", f: "преимущество", h: "Словарное слово.", b: true },
+        { m: "пр_скорбный", a: "и", f: "прискорбный", h: "Словарное слово." },
+        { m: "пр_тензия", a: "е", f: "претензия", h: "Словарное слово." },
+        { m: "пр_чудливый", a: "и", f: "причудливый", h: "Словарное слово.", b: true },
+        { m: "пр_увеличить", a: "е", f: "преувеличить", h: "В значении 'очень'." },
+        { m: "пр_способиться", a: "и", f: "приспособиться", h: "Присоединение/близость." }
+    ];
+
+    let state = {
+        mode: 'classic',
+        score: 0,
+        lives: 3,
+        combo: 0,
+        index: 0,
+        correct: 0,
+        shuffled: [],
+        timer: null,
+        time: 20
+    };
+
+    // Управление меню
+    function setMode(mode, el) {
+        state.mode = mode;
+        document.querySelectorAll('.mode-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    function confirmExit() {
+        if(confirm("Прервать игру и выйти в меню?")) {
+            showMenu();
+        }
+    }
+
+    function showMenu() {
+        clearInterval(state.timer);
+        document.getElementById('exit-game').classList.add('hidden');
+        switchScreen('screen-menu');
+        updateRecords();
+    }
+
+    function updateRecords() {
+        document.getElementById('rec-classic').textContent = localStorage.getItem('prePri_classic') || 0;
+        document.getElementById('rec-combo').textContent = localStorage.getItem('prePri_combo') || 0;
+        document.getElementById('rec-boss').textContent = localStorage.getItem('prePri_boss') || 0;
+        document.getElementById('rec-time').textContent = localStorage.getItem('prePri_time') || 0;
+    }
+
+    // Игровой цикл
+    function startNewGame() {
+        state.score = 0;
+        state.lives = 3;
+        state.combo = 0;
+        state.correct = 0;
+        state.index = 0;
+        state.time = 20;
+        
+        // Генерация колоды под режим
+        if(state.mode === 'boss') {
+            let bossCards = dictionary.filter(w => w.b);
+            let normalCards = dictionary.filter(w => !w.b).sort(() => Math.random() - 0.5);
+            state.shuffled = [];
+            for(let i=0; i<15; i++) {
+                if((i+1)%4 === 0) state.shuffled.push(bossCards[Math.floor(Math.random()*bossCards.length)]);
+                else state.shuffled.push(normalCards.pop());
+            }
+        } else {
+            state.shuffled = [...dictionary].sort(() => Math.random() - 0.5);
+        }
+
+        switchScreen('screen-game');
+        document.getElementById('exit-game').classList.remove('hidden');
+        
+        // Настройка UI
+        document.getElementById('lives-box').classList.toggle('hidden', state.mode === 'time' || state.mode === 'combo');
+        document.getElementById('timer-box').classList.toggle('hidden', state.mode !== 'time');
+        
+        if(state.mode === 'time') startClock();
+        
+        renderWord();
+        updateStats();
+    }
+
+    function startClock() {
+        clearInterval(state.timer);
+        state.timer = setInterval(() => {
+            state.time--;
+            document.getElementById('timer-box').textContent = `00:${state.time < 10 ? '0'+state.time : state.time}`;
+            if(state.time <= 5) document.getElementById('timer-box').classList.add('timer-warn');
+            if(state.time <= 0) finishGame();
+        }, 1000);
+    }
+
+    function renderWord() {
+        let word = state.shuffled[state.index];
+        document.getElementById('word-display').innerHTML = word.m.replace('_', '<span>_</span>');
+        document.getElementById('word-box').classList.toggle('boss-mode', !!word.b);
+        document.getElementById('boss-tag').classList.toggle('hidden', !word.b);
+        document.getElementById('feedback').classList.add('hidden');
+        document.querySelectorAll('.btn-choice').forEach(b => {
+            b.disabled = false;
+            b.classList.remove('correct', 'wrong');
+        });
+        
+        // Титлы комбо
+        const titles = ["", "Хорошо!", "В потоке!", "Мастер!", "ЛЕГЕНДА!"];
+        document.getElementById('combo-title').textContent = state.combo > 2 ? titles[Math.min(Math.floor(state.combo/3), 4)] : "";
+    }
+
+    function handleAnswer(ans) {
+        let word = state.shuffled[state.index];
+        let isCorrect = ans === word.a;
+        let btns = document.querySelectorAll('.btn-choice');
+        btns.forEach(b => b.disabled = true);
+
+        if(isCorrect) {
+            state.correct++;
+            state.combo++;
+            state.score += (10 + state.combo * 2);
+            if(state.mode === 'time') state.time += 2;
+            document.getElementById(`btn-${ans}`).classList.add('correct');
+            document.getElementById('fb-title').textContent = "Верно! ✨";
+            document.getElementById('fb-title').style.color = "var(--success)";
+        } else {
+            state.combo = 0;
+            if(state.mode === 'classic') state.lives--;
+            if(state.mode === 'boss' && word.b) state.lives = 0; // Босс убивает сразу
+            if(state.mode === 'combo') return finishGame();
+            if(state.mode === 'time') state.time -= 3;
+            
+            document.getElementById(`btn-${ans}`).classList.add('wrong');
+            document.getElementById(`btn-${word.a}`).classList.add('correct');
+            document.getElementById('fb-title').textContent = "Ошибка";
+            document.getElementById('fb-title').style.color = "var(--danger)";
+        }
+
+        document.getElementById('fb-hint').textContent = word.h;
+        document.getElementById('feedback').classList.remove('hidden');
+        document.getElementById('word-display').textContent = word.f;
+        updateStats();
+
+        if(state.lives <= 0) setTimeout(finishGame, 800);
+        if(state.mode === 'time') setTimeout(nextStep, 1000);
+    }
+
+    function nextStep() {
+        state.index++;
+        if(state.index >= state.shuffled.length) finishGame();
+        else renderWord();
+    }
+
+    function updateStats() {
+        document.getElementById('score-val').textContent = state.score;
+        document.getElementById('lives-box').textContent = '❤️'.repeat(Math.max(0, state.lives));
+    }
+
+    function finishGame() {
+        clearInterval(state.timer);
+        document.getElementById('exit-game').classList.add('hidden');
+        switchScreen('screen-results');
+        
+        let acc = Math.round((state.correct / (state.index + 1)) * 100);
+        document.getElementById('res-score').textContent = state.score;
+        document.getElementById('res-acc').textContent = acc + "%";
+        
+        let rank = acc > 90 ? "S" : acc > 70 ? "A" : "B";
+        document.getElementById('res-rank').textContent = rank;
+        
+        // Сохранение рекорда
+        let key = `prePri_${state.mode}`;
+        let lastBest = localStorage.getItem(key) || 0;
+        if(state.score > lastBest) localStorage.setItem(key, state.score);
+    }
+
+    function switchScreen(id) {
+        ['screen-menu', 'screen-game', 'screen-results'].forEach(s => {
+            document.getElementById(s).classList.add('hidden');
+        });
+        document.getElementById(id).classList.remove('hidden');
+    }
+
+    // Инициализация
+    updateRecords();
+</script>
+</body>
+</html>
