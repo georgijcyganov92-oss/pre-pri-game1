@@ -2,8 +2,10 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ПРЕ-ПРИ Мастер PRO</title>
+    <!-- Подключение Telegram WebApp API -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --primary: #6366f1;
@@ -15,44 +17,50 @@
             --boss: #7c3aed;
             --text-main: #1e293b;
             --text-muted: #64748b;
-            --bg-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-            --glass: rgba(255, 255, 255, 0.98);
+            /* Адаптация под тему ТГ, если открыто не в ТГ - дефолт */
+            --bg-color: var(--tg-theme-bg-color, #f1f5f9);
+            --card-bg: var(--tg-theme-bg-color, #ffffff);
+            --text-color: var(--tg-theme-text-color, #1e293b);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg-gradient);
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            color: var(--text-main);
-            padding: 20px;
+            color: var(--text-color);
+            overflow: hidden; /* Запрет скролла */
         }
 
-        /* Основная карточка */
         .app-card {
-            background: var(--glass);
+            background: var(--card-bg);
             width: 100%;
             max-width: 480px;
+            height: 100vh; /* На мобилках на весь экран */
             padding: 2.5rem 1.5rem 1.5rem;
-            border-radius: 32px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3);
-            text-align: center;
-            position: relative;
-            min-height: 500px;
+            border-radius: 0;
             display: flex;
             flex-direction: column;
             transition: transform 0.3s ease;
+            position: relative;
+        }
+        
+        @media (min-width: 480px) {
+            .app-card {
+                height: 90vh;
+                border-radius: 32px;
+                box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3);
+            }
         }
 
-        /* Кнопка выхода из игры */
         .exit-btn {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: 15px;
+            left: 15px;
             background: #f1f5f9;
             border: none;
             width: 40px;
@@ -64,16 +72,15 @@
             justify-content: center;
             transition: all 0.2s;
             z-index: 10;
+            color: #1e293b;
         }
-        .exit-btn:hover { background: #fee2e2; color: var(--danger); }
+        .exit-btn:active { background: #fee2e2; color: var(--danger); transform: scale(0.9); }
 
-        /* Заголовки */
-        h1 { font-size: 1.8rem; margin-bottom: 0.5rem; background: linear-gradient(to right, var(--primary), var(--boss)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .subtitle { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; }
+        h1 { font-size: 2rem; margin-bottom: 0.5rem; background: linear-gradient(to right, var(--primary), var(--boss)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; font-weight: 900;}
+        .subtitle { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem; text-align: center; }
 
         /* Сетка режимов */
-        .mode-list { display: flex; flex-direction: column; gap: 12px; }
-
+        .mode-list { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding-bottom: 20px;}
         .mode-item {
             display: flex;
             align-items: center;
@@ -83,98 +90,92 @@
             border-radius: 20px;
             cursor: pointer;
             transition: all 0.2s ease;
-            text-align: left;
-            position: relative;
+            color: #1e293b;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
         }
+        .mode-item:active { transform: scale(0.98); }
+        .mode-item.active { border-color: var(--primary); background: #e0e7ff; }
 
-        .mode-item:hover { border-color: var(--primary-light); transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
-        .mode-item.active { border-color: var(--primary); background: #f5f3ff; }
+        .mode-icon { font-size: 2rem; margin-right: 16px; }
+        .mode-info h3 { font-size: 1.1rem; margin-bottom: 2px; font-weight: 800;}
+        .mode-info p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.2; }
 
-        .mode-icon { font-size: 1.8rem; margin-right: 16px; }
-        .mode-info h3 { font-size: 1rem; margin-bottom: 2px; }
-        .mode-info p { font-size: 0.8rem; color: var(--text-muted); }
-
-        .best-badge {
-            margin-left: auto;
-            background: #eef2ff;
-            color: var(--primary);
-            padding: 4px 10px;
-            border-radius: 10px;
-            font-size: 0.75rem;
-            font-weight: 700;
-        }
+        .best-badge { margin-left: auto; background: #eef2ff; color: var(--primary); padding: 4px 10px; border-radius: 10px; font-size: 0.8rem; font-weight: 800; }
 
         /* Игровая зона */
-        .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; margin-top: 10px; }
-        .stat-pill { background: #f8fafc; padding: 6px 14px; border-radius: 14px; font-weight: 700; font-size: 0.9rem; border: 1px solid #f1f5f9; }
+        .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; margin-top: 20px; }
+        .stat-pill { background: #f8fafc; padding: 8px 16px; border-radius: 16px; font-weight: 800; font-size: 1rem; border: 2px solid #e2e8f0; color: #1e293b; }
 
         .word-box {
             background: #fff;
             border: 4px solid #f8fafc;
             padding: 3rem 1rem;
-            border-radius: 24px;
-            margin: 20px 0;
+            border-radius: 28px;
+            margin: 10px 0 auto 0;
             position: relative;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 180px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
         }
-        .word-text { font-size: 2.5rem; font-weight: 900; letter-spacing: 1px; }
-        .word-text span { color: var(--primary); text-decoration: underline; text-underline-offset: 8px; }
+        /* АДАПТИВНЫЙ ТЕКСТ: Использование vw для предотвращения вылезания за края */
+        .word-text { font-size: clamp(1.5rem, 8vw, 2.8rem); font-weight: 900; letter-spacing: 1px; color: #1e293b; text-align: center; word-break: break-word; line-height: 1.1;}
+        .word-text span { color: var(--primary); border-bottom: 4px solid var(--primary); padding-bottom: 2px; }
 
         /* Кнопки ответов */
-        .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: auto; }
+        .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
         .btn-choice {
-            padding: 1.2rem;
-            font-size: 1.6rem;
-            font-weight: 800;
-            border-radius: 20px;
+            padding: 1.5rem;
+            font-size: 2rem;
+            font-weight: 900;
+            border-radius: 24px;
             border: none;
             background: #f1f5f9;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.1s;
             color: var(--text-main);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
         }
-        .btn-choice:hover:not(:disabled) { background: var(--primary); color: white; transform: scale(1.05); }
-        .btn-choice:disabled { opacity: 0.6; }
+        .btn-choice:active:not(:disabled) { transform: scale(0.95); background: #e2e8f0; }
+        .btn-choice:disabled { opacity: 0.8; }
 
-        .correct { background: var(--success) !important; color: white !important; }
-        .wrong { background: var(--danger) !important; color: white !important; }
+        .correct { background: var(--success) !important; color: white !important; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4) !important;}
+        .wrong { background: var(--danger) !important; color: white !important; box-shadow: 0 0 20px rgba(239, 68, 68, 0.4) !important; animation: shake 0.4s ease;}
 
         /* Фидбек */
-        .feedback {
-            margin-top: 1.5rem;
-            padding: 1.2rem;
-            border-radius: 20px;
-            background: #f8fafc;
-            animation: popIn 0.3s ease;
-        }
-        .feedback h4 { margin-bottom: 4px; }
-        .hint { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; }
+        .feedback { margin-bottom: 20px; padding: 1.2rem; border-radius: 20px; background: #f8fafc; animation: popIn 0.3s ease; text-align: center; border: 2px solid #e2e8f0;}
+        .feedback h4 { margin-bottom: 4px; font-size: 1.2rem; font-weight: 800;}
+        .hint { font-size: 0.95rem; color: var(--text-muted); line-height: 1.4; font-weight: 600;}
 
         /* Утилиты */
         .hidden { display: none !important; }
         .btn-primary {
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
-            padding: 1rem;
-            border-radius: 16px;
+            padding: 1.2rem;
+            border-radius: 20px;
             border: none;
-            font-weight: 700;
+            font-weight: 900;
             cursor: pointer;
             width: 100%;
-            margin-top: 15px;
-            font-size: 1rem;
+            font-size: 1.2rem;
+            box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
         }
-        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-primary:active { transform: scale(0.98); }
 
-        /* Анимации */
+        /* Эффекты */
         @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         
-        /* Эффекты для босса и комбо */
-        .boss-mode { border-color: var(--boss) !important; background: #faf5ff !important; box-shadow: 0 0 20px rgba(124, 58, 237, 0.2); }
-        .boss-label { background: var(--boss); color: white; padding: 4px 12px; border-radius: 8px; font-size: 0.7rem; position: absolute; top: -12px; left: 50%; transform: translateX(-50%); font-weight: 800; }
+        .boss-mode { border-color: var(--boss) !important; background: #faf5ff !important; box-shadow: 0 0 30px rgba(124, 58, 237, 0.3) !important; animation: pulse-boss 2s infinite;}
+        @keyframes pulse-boss { 0% { box-shadow: 0 0 20px rgba(124, 58, 237, 0.2); } 50% { box-shadow: 0 0 40px rgba(124, 58, 237, 0.5); } 100% { box-shadow: 0 0 20px rgba(124, 58, 237, 0.2); } }
         
-        .timer-warn { color: var(--danger); animation: shake 0.5s infinite; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+        .boss-label { background: var(--boss); color: white; padding: 6px 16px; border-radius: 12px; font-size: 0.8rem; position: absolute; top: -15px; left: 50%; transform: translateX(-50%); font-weight: 900; letter-spacing: 2px;}
+        .timer-warn { color: var(--danger) !important; border-color: var(--danger) !important; animation: shake 0.5s infinite; }
+        
+        #screen-menu, #screen-game, #screen-results { flex-grow: 1; display: flex; flex-direction: column; }
     </style>
 </head>
 <body>
@@ -184,9 +185,10 @@
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
     </button>
 
+    <!-- МЕНЮ -->
     <div id="screen-menu">
         <h1>ПРЕ или ПРИ?</h1>
-        <p class="subtitle">Мастерство русской орфографии</p>
+        <p class="subtitle">Тренировка для ЕГЭ</p>
         
         <div class="mode-list">
             <div class="mode-item active" onclick="setMode('classic', this)">
@@ -202,7 +204,7 @@
                 <div class="mode-icon">🔥</div>
                 <div class="mode-info">
                     <h3>Комбо-мастер</h3>
-                    <p>Серия без права на ошибку.</p>
+                    <p>До первой ошибки. Турбо-режим.</p>
                 </div>
                 <div class="best-badge" id="rec-combo">0</div>
             </div>
@@ -210,7 +212,7 @@
             <div class="mode-item" onclick="setMode('boss', this)">
                 <div class="mode-icon">👾</div>
                 <div class="mode-info">
-                    <h3>Битва с боссами</h3>
+                    <h3>Словарные Боссы</h3>
                     <p>Сложные слова каждые 5 ходов.</p>
                 </div>
                 <div class="best-badge" id="rec-boss">0</div>
@@ -219,99 +221,153 @@
             <div class="mode-item" onclick="setMode('time', this)">
                 <div class="mode-icon">⏳</div>
                 <div class="mode-info">
-                    <h3>ЕГЭ-забег</h3>
-                    <p>20 секунд. Скорость решает!</p>
+                    <h3>Забег на время</h3>
+                    <p>30 секунд. Верный ответ = +2 сек.</p>
                 </div>
                 <div class="best-badge" id="rec-time">0</div>
             </div>
         </div>
 
-        <button class="btn-primary" style="margin-top: 2rem;" onclick="startNewGame()">ИГРАТЬ</button>
+        <button class="btn-primary" style="margin-top: auto; margin-bottom: 10px;" onclick="startNewGame()">ИГРАТЬ</button>
     </div>
 
+    <!-- ИГРА -->
     <div id="screen-game" class="hidden">
         <div class="game-header">
             <div id="lives-box" class="stat-pill">❤️❤️❤️</div>
-            <div id="timer-box" class="stat-pill hidden">00:20</div>
+            <div id="timer-box" class="stat-pill hidden">00:30</div>
             <div class="stat-pill">Счёт: <span id="score-val">0</span></div>
         </div>
 
-        <div id="combo-title" style="font-weight: 800; color: var(--warning); height: 20px; font-size: 0.8rem;"></div>
+        <div id="combo-title" style="font-weight: 900; color: var(--warning); height: 20px; font-size: 0.9rem; text-align: center; text-transform: uppercase;"></div>
 
         <div class="word-box" id="word-box">
             <div id="boss-tag" class="boss-label hidden">БОСС</div>
+            <!-- Dynamic font scaling applied via CSS clamp -->
             <div class="word-text" id="word-display">пр<span>_</span>вратить</div>
+        </div>
+
+        <div id="feedback" class="feedback hidden">
+            <h4 id="fb-title">Верно!</h4>
+            <p id="fb-hint" class="hint"></p>
+            <button id="next-btn" class="btn-primary" style="padding: 0.8rem; margin-top: 10px;" onclick="nextStep()">Далее</button>
         </div>
 
         <div class="choices">
             <button class="btn-choice" id="btn-е" onclick="handleAnswer('е')">Е</button>
             <button class="btn-choice" id="btn-и" onclick="handleAnswer('и')">И</button>
         </div>
-
-        <div id="feedback" class="feedback hidden">
-            <h4 id="fb-title">Верно!</h4>
-            <p id="fb-hint" class="hint"></p>
-            <button class="btn-primary" onclick="nextStep()">Далее</button>
-        </div>
     </div>
 
+    <!-- РЕЗУЛЬТАТЫ -->
     <div id="screen-results" class="hidden">
-        <h2 id="res-status">Раунд окончен</h2>
-        <div id="res-rank" style="font-size: 4rem; font-weight: 900; margin: 20px 0; color: var(--warning);">S</div>
-        
-        <div style="background: #f8fafc; border-radius: 20px; padding: 1.5rem; margin-bottom: 20px;">
-            <p>Очки: <b id="res-score">0</b></p>
-            <p>Точность: <b id="res-acc">0%</b></p>
-            <p id="res-extra"></p>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <h2 id="res-status" style="font-size: 2rem; color: #1e293b; font-weight: 900;">Потрачено</h2>
+            <div id="res-rank" style="font-size: 6rem; font-weight: 900; margin: 10px 0; color: var(--warning); text-shadow: 0 10px 20px rgba(245,158,11,0.3);">S</div>
+            
+            <div style="background: #f8fafc; border-radius: 24px; padding: 2rem; width: 100%; border: 2px solid #e2e8f0; text-align: center; font-size: 1.2rem;">
+                <p style="margin-bottom: 10px; color: var(--text-muted); font-weight: 700;">ОЧКИ <br><b id="res-score" style="font-size: 2.5rem; color: #1e293b;">0</b></p>
+                <p style="color: var(--text-muted); font-weight: 700;">ТОЧНОСТЬ <br><b id="res-acc" style="font-size: 1.5rem; color: #1e293b;">0%</b></p>
+            </div>
         </div>
 
-        <button class="btn-primary" onclick="showMenu()">В МЕНЮ</button>
+        <button class="btn-primary" style="margin-bottom: 10px;" onclick="showMenu()">В ГЛАВНОЕ МЕНЮ</button>
     </div>
 </div>
 
 <script>
-    // База слов
+    // --- Инициализация Telegram WebApp ---
+    const tg = window.Telegram.WebApp;
+    tg.expand(); // Открываем на весь экран в ТГ
+    tg.ready();
+
+    function vibrate(type) {
+        if (tg.HapticFeedback) {
+            if(type === 'correct') tg.HapticFeedback.notificationOccurred('success');
+            else if(type === 'wrong') tg.HapticFeedback.notificationOccurred('error');
+            else if(type === 'tap') tg.HapticFeedback.impactOccurred('light');
+        }
+    }
+
+    // Полный словарь по картинке
     const dictionary = [
-        { m: "пр_зидент", a: "е", f: "президент", h: "Словарное слово." },
-        { m: "пр_вилегия", a: "и", f: "привилегия", h: "Словарное слово.", b: true },
-        { m: "пр_пятствие", a: "е", f: "препятствие", h: "Близко к значению 'пере-' (преграда)." },
-        { m: "пр_оритет", a: "и", f: "приоритет", h: "Словарное слово.", b: true },
-        { m: "пр_кратить", a: "е", f: "прекратить", h: "Близко к 'пере-'." },
-        { m: "пр_лежный", a: "и", f: "прилежный", h: "Словарное слово." },
-        { m: "пр_небрегать", a: "е", f: "пренебрегать", h: "Словарное слово.", b: true },
-        { m: "пр_вратить", a: "е", f: "превратить", h: "Переменить (пере-)." },
-        { m: "пр_выкнуть", a: "и", f: "привыкнуть", h: "Доведение действия до конца." },
-        { m: "пр_имущество", a: "е", f: "преимущество", h: "Словарное слово.", b: true },
-        { m: "пр_скорбный", a: "и", f: "прискорбный", h: "Словарное слово." },
-        { m: "пр_тензия", a: "е", f: "претензия", h: "Словарное слово." },
-        { m: "пр_чудливый", a: "и", f: "причудливый", h: "Словарное слово.", b: true },
-        { m: "пр_увеличить", a: "е", f: "преувеличить", h: "В значении 'очень'." },
-        { m: "пр_способиться", a: "и", f: "приспособиться", h: "Присоединение/близость." }
+        // ПРЕ
+        { m: "беспр_кословно", a: "е", f: "беспрекословно", h: "= не переча" },
+        { m: "непр_менно", a: "е", f: "непременно", h: "= без перемен" },
+        { m: "пр_вентивный", a: "е", f: "превентивный", h: "Словарное", b: true },
+        { m: "пр_возносить", a: "е", f: "превозносить", h: "= ОЧЕНЬ хвалить" },
+        { m: "пр_возмочь", a: "е", f: "превозмочь", h: "= ПЕРЕсилить" },
+        { m: "пр_вратное", a: "е", f: "превратное", h: "= ПЕРЕвёрнутое" },
+        { m: "пр_грешение", a: "е", f: "прегрешение", h: "Словарное" },
+        { m: "пр_зидент", a: "е", f: "президент", h: "Словарное", b: true },
+        { m: "пр_зирать", a: "е", f: "презирать", h: "Словарное (врага)" },
+        { m: "пр_исполненный", a: "е", f: "преисполненный", h: "Словарное" },
+        { m: "пр_людия", a: "е", f: "прелюдия", h: "Словарное" },
+        { m: "пр_льстить", a: "е", f: "прельстить", h: "Словарное" },
+        { m: "пр_небрегать", a: "е", f: "пренебрегать", h: "ПЕРЕшагнуть через внимание" },
+        { m: "пр_обладать", a: "е", f: "преобладать", h: "Словарное" },
+        { m: "пр_поднести", a: "е", f: "преподнести", h: "Словарное" },
+        { m: "пр_пятствие", a: "е", f: "препятствие", h: "= ПЕРЕграда" },
+        { m: "пр_рогатива", a: "е", f: "прерогатива", h: "Словарное", b: true },
+        { m: "пр_сечь", a: "е", f: "пресечь", h: "= ПЕРЕстать" },
+        { m: "пр_следовать", a: "е", f: "преследовать", h: "Словарное" },
+        { m: "пр_словутый", a: "е", f: "пресловутый", h: "Словарное" },
+        { m: "пр_смыкаться", a: "е", f: "пресмыкаться", h: "Словарное" },
+        { m: "пр_старелый", a: "е", f: "престарелый", h: "= ОЧЕНЬ старый" },
+        { m: "пр_тензия", a: "е", f: "претензия", h: "Словарное", b: true },
+        { m: "пр_увеличить", a: "е", f: "преувеличить", h: "= ОЧЕНЬ" },
+        { m: "пр_успеть", a: "е", f: "преуспеть", h: "= ОЧЕНЬ" },
+        
+        // ПРИ
+        { m: "пр_баутка", a: "и", f: "прибаутка", h: "Словарное" },
+        { m: "пр_вередливый", a: "и", f: "привередливый", h: "Капризный", b: true },
+        { m: "пр_видение", a: "и", f: "привидение", h: "Словарное" },
+        { m: "пр_вилегия", a: "и", f: "привилегия", h: "Словарное", b: true },
+        { m: "пр_внести", a: "и", f: "привнести", h: "Добавление" },
+        { m: "пр_волье", a: "и", f: "приволье", h: "Словарное" },
+        { m: "пр_говор", a: "и", f: "приговор", h: "Словарное" },
+        { m: "пр_годиться", a: "и", f: "пригодиться", h: "Словарное" },
+        { m: "пр_гожий", a: "и", f: "пригожий", h: "Словарное" },
+        { m: "пр_готовить", a: "и", f: "приготовить", h: "Законченность" },
+        { m: "пр_дираться", a: "и", f: "придираться", h: "Словарное" },
+        { m: "пр_знаться", a: "и", f: "признаться", h: "Словарное" },
+        { m: "пр_каз", a: "и", f: "приказ", h: "Словарное" },
+        { m: "пр_ключение", a: "и", f: "приключение", h: "Словарное" },
+        { m: "пр_лежный", a: "и", f: "прилежный", h: "Словарное" },
+        { m: "пр_менять", a: "и", f: "применять", h: "Словарное" },
+        { m: "пр_мерять", a: "и", f: "примерять", h: "Словарное" },
+        { m: "пр_мета", a: "и", f: "примета", h: "Словарное" },
+        { m: "пр_митивный", a: "и", f: "примитивный", h: "Словарное", b: true },
+        { m: "пр_налечь", a: "и", f: "приналечь", h: "Неполнота" },
+        { m: "пр_нудить", a: "и", f: "принудить", h: "Словарное" },
+        { m: "пр_оритет", a: "и", f: "приоритет", h: "Словарное", b: true },
+        { m: "пр_рост", a: "и", f: "прирост", h: "Словарное" },
+        { m: "пр_сяга", a: "и", f: "присяга", h: "Словарное" },
+        { m: "пр_скорбный", a: "и", f: "прискорбный", h: "Вызывающий скорбь", b: true },
+        { m: "пр_сниться", a: "и", f: "присниться", h: "Словарное" },
+        { m: "пр_страстный", a: "и", f: "пристрастный", h: "Словарное" },
+        { m: "пр_тязание", a: "и", f: "притязание", h: "Словарное" },
+        { m: "пр_умножить", a: "и", f: "приумножить", h: "Словарное" },
+        { m: "пр_чудливый", a: "и", f: "причудливый", h: "От причуда" },
+        { m: "пр_хотливый", a: "и", f: "прихотливый", h: "От прихоть" },
+        { m: "пр_цениться", a: "и", f: "прицениться", h: "Неполнота" },
+        { m: "пр_целиться", a: "и", f: "прицелиться", h: "Неполнота" },
+        { m: "непр_миримый", a: "и", f: "непримиримый", h: "Словарное" },
+        { m: "непр_глядный", a: "и", f: "неприглядный", h: "Словарное" }
     ];
 
-    let state = {
-        mode: 'classic',
-        score: 0,
-        lives: 3,
-        combo: 0,
-        index: 0,
-        correct: 0,
-        shuffled: [],
-        timer: null,
-        time: 20
-    };
+    let state = { mode: 'classic', score: 0, lives: 3, combo: 0, index: 0, correct: 0, shuffled: [], timer: null, time: 30, isWaiting: false };
 
-    // Управление меню
     function setMode(mode, el) {
+        vibrate('tap');
         state.mode = mode;
         document.querySelectorAll('.mode-item').forEach(i => i.classList.remove('active'));
         el.classList.add('active');
     }
 
     function confirmExit() {
-        if(confirm("Прервать игру и выйти в меню?")) {
-            showMenu();
-        }
+        vibrate('tap');
+        if(confirm("Прервать игру и выйти в меню?")) showMenu();
     }
 
     function showMenu() {
@@ -322,28 +378,21 @@
     }
 
     function updateRecords() {
-        document.getElementById('rec-classic').textContent = localStorage.getItem('prePri_classic') || 0;
-        document.getElementById('rec-combo').textContent = localStorage.getItem('prePri_combo') || 0;
-        document.getElementById('rec-boss').textContent = localStorage.getItem('prePri_boss') || 0;
-        document.getElementById('rec-time').textContent = localStorage.getItem('prePri_time') || 0;
+        ['classic', 'combo', 'boss', 'time'].forEach(m => {
+            document.getElementById(`rec-${m}`).textContent = localStorage.getItem(`prePri_${m}`) || 0;
+        });
     }
 
-    // Игровой цикл
     function startNewGame() {
-        state.score = 0;
-        state.lives = 3;
-        state.combo = 0;
-        state.correct = 0;
-        state.index = 0;
-        state.time = 20;
+        vibrate('tap');
+        state.score = 0; state.lives = 3; state.combo = 0; state.correct = 0; state.index = 0; state.time = 30; state.isWaiting = false;
         
-        // Генерация колоды под режим
         if(state.mode === 'boss') {
             let bossCards = dictionary.filter(w => w.b);
             let normalCards = dictionary.filter(w => !w.b).sort(() => Math.random() - 0.5);
             state.shuffled = [];
-            for(let i=0; i<15; i++) {
-                if((i+1)%4 === 0) state.shuffled.push(bossCards[Math.floor(Math.random()*bossCards.length)]);
+            for(let i=0; i<30; i++) {
+                if((i+1)%5 === 0) state.shuffled.push(bossCards[Math.floor(Math.random()*bossCards.length)]);
                 else state.shuffled.push(normalCards.pop());
             }
         } else {
@@ -353,9 +402,9 @@
         switchScreen('screen-game');
         document.getElementById('exit-game').classList.remove('hidden');
         
-        // Настройка UI
         document.getElementById('lives-box').classList.toggle('hidden', state.mode === 'time' || state.mode === 'combo');
         document.getElementById('timer-box').classList.toggle('hidden', state.mode !== 'time');
+        document.getElementById('timer-box').classList.remove('timer-warn');
         
         if(state.mode === 'time') startClock();
         
@@ -365,49 +414,59 @@
 
     function startClock() {
         clearInterval(state.timer);
+        document.getElementById('timer-box').textContent = `00:${state.time}`;
         state.timer = setInterval(() => {
             state.time--;
             document.getElementById('timer-box').textContent = `00:${state.time < 10 ? '0'+state.time : state.time}`;
             if(state.time <= 5) document.getElementById('timer-box').classList.add('timer-warn');
+            else document.getElementById('timer-box').classList.remove('timer-warn');
+            
             if(state.time <= 0) finishGame();
         }, 1000);
     }
 
     function renderWord() {
+        if(state.index >= state.shuffled.length) { finishGame(); return; }
+        
+        state.isWaiting = false;
         let word = state.shuffled[state.index];
         document.getElementById('word-display').innerHTML = word.m.replace('_', '<span>_</span>');
-        document.getElementById('word-box').classList.toggle('boss-mode', !!word.b);
-        document.getElementById('boss-tag').classList.toggle('hidden', !word.b);
+        document.getElementById('word-box').classList.toggle('boss-mode', !!word.b && state.mode === 'boss');
+        document.getElementById('boss-tag').classList.toggle('hidden', !(word.b && state.mode === 'boss'));
+        
         document.getElementById('feedback').classList.add('hidden');
         document.querySelectorAll('.btn-choice').forEach(b => {
             b.disabled = false;
             b.classList.remove('correct', 'wrong');
         });
         
-        // Титлы комбо
-        const titles = ["", "Хорошо!", "В потоке!", "Мастер!", "ЛЕГЕНДА!"];
+        const titles = ["", "Хорошо!", "В потоке!", "ОГОНЬ! 🔥", "ЛЕГЕНДА! 👑"];
         document.getElementById('combo-title').textContent = state.combo > 2 ? titles[Math.min(Math.floor(state.combo/3), 4)] : "";
     }
 
     function handleAnswer(ans) {
+        if(state.isWaiting) return;
+        state.isWaiting = true;
+
         let word = state.shuffled[state.index];
         let isCorrect = ans === word.a;
         let btns = document.querySelectorAll('.btn-choice');
         btns.forEach(b => b.disabled = true);
 
         if(isCorrect) {
-            state.correct++;
-            state.combo++;
+            vibrate('correct');
+            state.correct++; state.combo++;
             state.score += (10 + state.combo * 2);
             if(state.mode === 'time') state.time += 2;
+            
             document.getElementById(`btn-${ans}`).classList.add('correct');
             document.getElementById('fb-title').textContent = "Верно! ✨";
             document.getElementById('fb-title').style.color = "var(--success)";
         } else {
+            vibrate('wrong');
             state.combo = 0;
             if(state.mode === 'classic') state.lives--;
-            if(state.mode === 'boss' && word.b) state.lives = 0; // Босс убивает сразу
-            if(state.mode === 'combo') return finishGame();
+            if(state.mode === 'boss' && word.b) state.lives = 0; // Инста-килл боссом
             if(state.mode === 'time') state.time -= 3;
             
             document.getElementById(`btn-${ans}`).classList.add('wrong');
@@ -417,18 +476,32 @@
         }
 
         document.getElementById('fb-hint').textContent = word.h;
-        document.getElementById('feedback').classList.remove('hidden');
         document.getElementById('word-display').textContent = word.f;
         updateStats();
 
-        if(state.lives <= 0) setTimeout(finishGame, 800);
-        if(state.mode === 'time') setTimeout(nextStep, 1000);
+        // Смерть = конец игры
+        if(state.lives <= 0 || (state.mode === 'combo' && !isCorrect)) {
+            document.getElementById('feedback').classList.remove('hidden');
+            document.getElementById('next-btn').classList.add('hidden'); // Убираем далее при смерти
+            setTimeout(finishGame, 1200);
+            return;
+        }
+
+        // Геймдизайн: В быстрых режимах переключаем сами без кнопки "Далее", чтобы не ломать темп
+        if (state.mode === 'time' || state.mode === 'combo' || (state.mode === 'classic' && isCorrect)) {
+            document.getElementById('feedback').classList.add('hidden');
+            setTimeout(nextStep, 600); // Быстрый переход
+        } else {
+            // В классике и боссах при ошибке даем прочитать правило
+            document.getElementById('feedback').classList.remove('hidden');
+            document.getElementById('next-btn').classList.remove('hidden');
+        }
     }
 
     function nextStep() {
+        vibrate('tap');
         state.index++;
-        if(state.index >= state.shuffled.length) finishGame();
-        else renderWord();
+        renderWord();
     }
 
     function updateStats() {
@@ -441,27 +514,29 @@
         document.getElementById('exit-game').classList.add('hidden');
         switchScreen('screen-results');
         
-        let acc = Math.round((state.correct / (state.index + 1)) * 100);
+        let acc = state.index === 0 ? 0 : Math.round((state.correct / state.index) * 100);
         document.getElementById('res-score').textContent = state.score;
         document.getElementById('res-acc').textContent = acc + "%";
         
-        let rank = acc > 90 ? "S" : acc > 70 ? "A" : "B";
-        document.getElementById('res-rank').textContent = rank;
+        let rank = "C";
+        if (acc > 95 && state.score > 100) rank = "S+";
+        else if (acc > 90) rank = "S";
+        else if (acc > 80) rank = "A";
+        else if (acc > 60) rank = "B";
         
-        // Сохранение рекорда
+        document.getElementById('res-rank').textContent = rank;
+        document.getElementById('res-status').textContent = state.lives <= 0 || (state.mode==='combo'&&acc<100) ? "Игра окончена" : "Время вышло!";
+        
         let key = `prePri_${state.mode}`;
         let lastBest = localStorage.getItem(key) || 0;
         if(state.score > lastBest) localStorage.setItem(key, state.score);
     }
 
     function switchScreen(id) {
-        ['screen-menu', 'screen-game', 'screen-results'].forEach(s => {
-            document.getElementById(s).classList.add('hidden');
-        });
+        ['screen-menu', 'screen-game', 'screen-results'].forEach(s => document.getElementById(s).classList.add('hidden'));
         document.getElementById(id).classList.remove('hidden');
     }
 
-    // Инициализация
     updateRecords();
 </script>
 </body>
