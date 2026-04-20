@@ -4,504 +4,490 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PRO Russian: Analytics & Game</title>
-    <!-- Подключение Telegram WebApp API -->
+    
+    <!-- Telegram WebApp API -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Шрифты: Manrope для аналитики, Inter для игры -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Шрифты: Manrope (Аналитика/Теория), Inter (Игра) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
+        /* ==================== DESIGN TOKENS ==================== */
         :root {
-            /* Общие / Аналитика */
+            /* Базовые цвета приложения (Dark Theme) */
+            --bg-main: #0f172a;
+            --surface-1: #1e293b;
+            --surface-2: #334155;
+            --surface-glass: rgba(30, 41, 59, 0.7);
+            
+            /* Акценты */
             --primary: #6366f1;
-            --bg: #0f172a;
-            --card-bg: #1e293b;
-            --text: #f8fafc;
-            --text-muted: #94a3b8;
+            --primary-hover: #4f46e5;
+            --primary-light: #818cf8;
+            --accent-purple: #a855f7;
+            --boss-color: #7c3aed;
+            
+            /* Статусы */
             --success: #10b981;
             --perfect: #22c55e;
             --warning: #f59e0b;
             --danger: #ef4444;
             --critical: #f43f5e;
-            --accent-purple: #a855f7;
+            
+            /* Текст (Dark) */
+            --text-1: #f8fafc;
+            --text-2: #94a3b8;
+            --text-3: #64748b;
 
-            /* Игра */
-            --primary-light: #818cf8;
-            --primary-dark: #4f46e5;
-            --boss: #7c3aed;
-            --game-text-main: #1e293b;
+            /* Игровые цвета (Light Theme по умолчанию, адаптируется под ТГ) */
+            --game-bg: var(--tg-theme-bg-color, #f1f5f9);
+            --game-surface: var(--tg-theme-bg-color, #ffffff);
+            --game-text: var(--tg-theme-text-color, #1e293b);
             --game-text-muted: #64748b;
-            --game-bg-color: var(--tg-theme-bg-color, #f1f5f9);
-            --game-card-bg: var(--tg-theme-bg-color, #ffffff);
-            --game-text-color: var(--tg-theme-text-color, #1e293b);
+            --game-border: #e2e8f0;
+            
+            /* Типографика */
+            --font-ui: 'Manrope', sans-serif;
+            --font-game: 'Inter', sans-serif;
         }
 
+        /* ==================== GLOBAL STYLES ==================== */
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
+        
         body {
-            font-family: 'Manrope', sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
+            font-family: var(--font-ui);
+            background-color: var(--bg-main);
+            color: var(--text-1);
             display: flex;
             justify-content: center;
             min-height: 100vh;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
-
+        
         body.no-scroll { overflow: hidden; }
-
-        /* Утилиты */
+        
+        button { font-family: inherit; cursor: pointer; outline: none; }
         .hidden { display: none !important; }
 
-        /* ==================== АНАЛИТИКА ==================== */
-        .container {
-            width: 100%;
-            max-width: 500px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            padding: 15px;
-            padding-bottom: 40px;
+        /* ==================== UI COMPONENTS ==================== */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+            color: white; padding: 16px; border-radius: 20px; border: none; 
+            font-weight: 800; width: 100%; font-size: 1.1rem; 
+            box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-        .predict-card {
-            background: linear-gradient(135deg, var(--primary), var(--accent-purple));
-            padding: 24px;
-            border-radius: 30px;
-            box-shadow: 0 15px 35px rgba(99, 102, 241, 0.3);
-        }
-        .predict-range { font-size: 2.8rem; font-weight: 800; margin: 8px 0; }
-        .goal-bar {
-            background: rgba(0,0,0,0.2);
-            padding: 12px 18px;
-            border-radius: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.85rem;
-        }
-        .panel {
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 24px;
-            border: 1px solid rgba(255,255,255,0.03);
-        }
-        .diagnosis-item {
-            display: inline-flex; align-items: center; gap: 5px; font-size: 0.8rem;
-            font-weight: 700; color: var(--critical); margin-right: 15px; margin-top: 8px;
-        }
-        .smart-task {
-            background: #273549; padding: 18px; border-radius: 20px;
-            margin-top: 12px; border: 1px solid rgba(255,255,255,0.05);
-        }
-        .reason-badge {
-            display: inline-block; background: rgba(99, 102, 241, 0.2); color: var(--primary);
-            font-size: 0.65rem; font-weight: 800; padding: 4px 10px; border-radius: 8px; margin-bottom: 8px;
-        }
-        .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .summary-item { background: rgba(255,255,255,0.03); padding: 10px; border-radius: 12px; font-size: 0.75rem; }
-        .summary-item b { color: var(--success); }
-        .topic-row { padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .topic-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .status-pill { font-size: 0.65rem; padding: 4px 10px; border-radius: 8px; font-weight: 800; text-transform: uppercase; }
-        .btn-group { display: flex; gap: 8px; margin-top: 12px; }
+        .btn-primary:active { transform: scale(0.97); box-shadow: 0 5px 10px -5px rgba(99, 102, 241, 0.4); }
+
         .btn-action {
-            flex: 1; border: none; padding: 10px; border-radius: 10px; font-size: 0.7rem;
-            font-weight: 800; cursor: pointer; background: rgba(255,255,255,0.05); color: var(--text); transition: 0.2s;
+            flex: 1; border: none; padding: 12px; border-radius: 12px; font-size: 0.75rem;
+            font-weight: 800; background: rgba(255,255,255,0.05); color: var(--text-1); 
+            transition: all 0.2s ease; display: flex; justify-content: center; align-items: center;
         }
-        .btn-action:active { transform: scale(0.95); }
-        .btn-action.primary { background: var(--primary); color: white; }
+        .btn-action:active { transform: scale(0.95); background: rgba(255,255,255,0.1); }
+        .btn-action.active-primary { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
 
-        /* ==================== ИГРА ==================== */
-        .game-overlay {
+        .glass-panel {
+            background: var(--surface-1);
+            padding: 24px; border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.03);
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+        }
+
+        .overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px);
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             z-index: 1000; display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
         }
-
-        .app-card {
-            font-family: 'Inter', -apple-system, sans-serif;
-            background: var(--game-card-bg);
-            color: var(--game-text-color);
-            width: 100%;
-            max-width: 480px;
-            height: 100vh;
-            padding: 2.5rem 1.5rem 1.5rem;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow-y: auto;
-        }
-
-        @media (min-width: 480px) {
-            .app-card { height: 90vh; border-radius: 32px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
-        }
+        .overlay.active { opacity: 1; pointer-events: all; }
 
         .exit-btn {
-            position: absolute; top: 15px; left: 15px; background: #f1f5f9; border: none;
-            width: 40px; height: 40px; border-radius: 12px; cursor: pointer; display: flex;
-            align-items: center; justify-content: center; transition: all 0.2s; z-index: 10; color: #1e293b;
+            position: absolute; top: 20px; left: 20px; background: var(--game-bg); border: none;
+            width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; 
+            justify-content: center; transition: all 0.2s; z-index: 10; color: var(--game-text);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
         }
-        .exit-btn:active { background: #fee2e2; color: var(--danger); transform: scale(0.9); }
+        .exit-btn:active { transform: scale(0.9); }
+        .exit-btn.dark-mode { background: rgba(255,255,255,0.1); color: var(--text-1); border: 1px solid rgba(255,255,255,0.05); }
 
-        .game-title { font-size: 2rem; margin-bottom: 0.5rem; background: linear-gradient(to right, var(--primary), var(--boss)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; font-weight: 900;}
-        .game-subtitle { color: var(--game-text-muted); font-size: 0.95rem; margin-bottom: 2rem; text-align: center; }
+        /* ==================== SCREEN: ANALYTICS (HUB) ==================== */
+        .hub-container {
+            width: 100%; max-width: 500px; display: flex; flex-direction: column; 
+            gap: 20px; padding: 20px 16px 40px;
+        }
+        
+        .predict-card {
+            background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+            padding: 28px 24px; border-radius: 32px; color: white;
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.25);
+            position: relative; overflow: hidden;
+        }
+        .predict-card::after {
+            content: ''; position: absolute; top: -50%; right: -50%; width: 200px; height: 200px;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%); border-radius: 50%;
+        }
+        .predict-range { font-size: 3.2rem; font-weight: 800; margin: 8px 0; letter-spacing: -1px; line-height: 1; }
+        
+        .goal-bar {
+            background: rgba(0,0,0,0.2); padding: 14px 20px; border-radius: 16px;
+            display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem;
+            backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .diagnosis-item {
+            display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem;
+            font-weight: 700; color: var(--critical); margin-right: 16px; margin-top: 12px;
+            background: rgba(244, 63, 94, 0.1); padding: 6px 12px; border-radius: 10px;
+        }
+        
+        .smart-task {
+            background: var(--surface-2); padding: 20px; border-radius: 20px;
+            margin-top: 16px; border: 1px solid rgba(255,255,255,0.05);
+        }
+        .reason-badge {
+            display: inline-block; background: rgba(99, 102, 241, 0.15); color: var(--primary-light);
+            font-size: 0.7rem; font-weight: 800; padding: 6px 12px; border-radius: 8px; margin-bottom: 12px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        
+        .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+        .summary-item { background: rgba(255,255,255,0.02); padding: 16px; border-radius: 16px; font-size: 0.8rem; font-weight: 500; border: 1px solid rgba(255,255,255,0.03);}
+        .summary-item b { display: block; font-size: 1.2rem; margin-top: 4px; font-weight: 800; color: var(--text-1); }
+        .summary-item b.positive { color: var(--success); }
+        .summary-item b.negative { color: var(--danger); }
+        
+        .topic-row { padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .topic-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .topic-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .status-pill { font-size: 0.7rem; padding: 4px 10px; border-radius: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;}
 
-        /* Сетка режимов */
+        /* ==================== SCREEN: THEORY (OVERLAY) ==================== */
+        .theory-card {
+            background: var(--surface-1); width: 100%; max-width: 480px; height: 90vh;
+            border-radius: 32px; display: flex; flex-direction: column; position: relative;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5); overflow: hidden; border: 1px solid rgba(255,255,255,0.05);
+            transform: translateY(20px); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .overlay.active .theory-card { transform: translateY(0); }
+        
+        .theory-content {
+            padding: 80px 24px 24px; overflow-y: auto; flex-grow: 1;
+            font-family: var(--font-ui);
+        }
+        
+        .theory-block { background: rgba(0,0,0,0.2); padding: 20px; border-radius: 20px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.02);}
+        .theory-block h3 { color: var(--primary-light); font-size: 1.1rem; margin-bottom: 10px; font-weight: 800; display: flex; align-items: center; gap: 8px;}
+        .theory-block ul { list-style: none; padding-left: 0; }
+        .theory-block li { margin-bottom: 10px; font-size: 0.95rem; color: var(--text-2); line-height: 1.5; padding-left: 16px; position: relative;}
+        .theory-block li::before { content: '•'; color: var(--primary); font-weight: bold; position: absolute; left: 0; top: 0;}
+        .theory-block li span.hl { color: var(--text-1); font-weight: 700; }
+        
+        .vocab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+        .vocab-word { background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; text-align: center; color: var(--warning);}
+
+        /* ==================== SCREEN: GAME (OVERLAY) ==================== */
+        .game-card {
+            font-family: var(--font-game); background: var(--game-surface); color: var(--game-text);
+            width: 100%; max-width: 480px; height: 100vh; padding: 20px; display: flex; flex-direction: column;
+            position: relative; transition: transform 0.3s ease;
+        }
+        @media (min-width: 480px) {
+            .game-card { height: 90vh; border-radius: 32px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+        }
+
+        /* Меню игры */
+        .game-title { font-size: 2.2rem; margin: 40px 0 5px; background: linear-gradient(to right, var(--primary), var(--boss-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; font-weight: 900; letter-spacing: -1px;}
+        .game-subtitle { color: var(--game-text-muted); font-size: 1rem; margin-bottom: 30px; text-align: center; font-weight: 600;}
+        
         .mode-list { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding-bottom: 20px;}
         .mode-item {
-            display: flex; align-items: center; padding: 16px; background: #fff;
-            border: 2px solid #f1f5f9; border-radius: 20px; cursor: pointer; transition: all 0.2s ease;
-            color: #1e293b; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); user-select: none;
+            display: flex; align-items: center; padding: 18px; background: var(--game-surface);
+            border: 2px solid var(--game-border); border-radius: 20px; cursor: pointer; transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
         }
-        .mode-item:active { transform: scale(0.98); }
-        .mode-item.active { border-color: var(--primary); background: #e0e7ff; }
-        .mode-icon { font-size: 2rem; margin-right: 16px; }
-        .mode-info h3 { font-size: 1.1rem; margin-bottom: 2px; font-weight: 800;}
-        .mode-info p { font-size: 0.8rem; color: var(--game-text-muted); line-height: 1.2; }
-        .best-badge { margin-left: auto; background: #eef2ff; color: var(--primary); padding: 4px 10px; border-radius: 10px; font-size: 0.8rem; font-weight: 800; }
+        .mode-item.active { border-color: var(--primary); background: #eef2ff; }
+        .mode-icon { font-size: 2.2rem; margin-right: 16px; }
+        .mode-info h3 { font-size: 1.1rem; margin-bottom: 4px; font-weight: 800; color: var(--game-text);}
+        .mode-info p { font-size: 0.85rem; color: var(--game-text-muted); line-height: 1.3; font-weight: 500;}
+        .best-badge { margin-left: auto; background: rgba(99,102,241,0.1); color: var(--primary); padding: 6px 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 800; }
 
-        /* Игровая зона */
-        .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; margin-top: 20px; }
-        .stat-pill { background: #f8fafc; padding: 8px 16px; border-radius: 16px; font-weight: 800; font-size: 1rem; border: 2px solid #e2e8f0; color: #1e293b; }
-
+        /* Игровой процесс */
+        .game-header { display: flex; justify-content: space-between; align-items: center; margin: 60px 0 20px; }
+        .stat-pill { background: var(--game-bg); padding: 10px 18px; border-radius: 16px; font-weight: 800; font-size: 1.1rem; border: 2px solid var(--game-border); color: var(--game-text); }
+        
         .word-box {
-            background: #fff; border: 4px solid #f8fafc; padding: 3rem 1rem; border-radius: 28px;
-            margin: 10px 0 auto 0; position: relative; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex; align-items: center; justify-content: center; min-height: 180px;
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+            background: var(--game-surface); border: 4px solid var(--game-bg); padding: 4rem 1rem; 
+            border-radius: 32px; margin: 10px 0 auto; position: relative; display: flex; 
+            align-items: center; justify-content: center; min-height: 200px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .word-text { font-size: clamp(1.5rem, 8vw, 2.8rem); font-weight: 900; letter-spacing: 1px; color: #1e293b; text-align: center; word-break: break-word; line-height: 1.1;}
+        .word-text { font-size: clamp(1.8rem, 8vw, 3rem); font-weight: 900; letter-spacing: 1px; color: var(--game-text); text-align: center; line-height: 1.1;}
         .word-text span { color: var(--primary); border-bottom: 4px solid var(--primary); padding-bottom: 2px; }
-
+        
         .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
         .btn-choice {
-            padding: 1.5rem; font-size: 2rem; font-weight: 900; border-radius: 24px;
-            border: none; background: #f1f5f9; cursor: pointer; transition: all 0.1s;
-            color: var(--game-text-main); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); user-select: none;
+            padding: 24px; font-size: 2.5rem; font-weight: 900; border-radius: 24px;
+            border: none; background: var(--game-bg); cursor: pointer; transition: all 0.15s;
+            color: var(--game-text); box-shadow: 0 4px 10px rgba(0,0,0,0.05); font-family: var(--font-game);
         }
         .btn-choice:active:not(:disabled) { transform: scale(0.95); background: #e2e8f0; }
-        .btn-choice:disabled { opacity: 0.8; }
-        .correct { background: var(--success) !important; color: white !important; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4) !important;}
-        .wrong { background: var(--danger) !important; color: white !important; box-shadow: 0 0 20px rgba(239, 68, 68, 0.4) !important; animation: shake 0.4s ease;}
+        .btn-choice:disabled { opacity: 0.9; cursor: default; }
+        
+        /* Состояния игры */
+        .correct { background: var(--success) !important; color: white !important; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4) !important;}
+        .wrong { background: var(--danger) !important; color: white !important; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.4) !important; animation: shake 0.4s ease;}
+        .boss-mode { border-color: var(--boss-color) !important; background: #faf5ff !important; box-shadow: 0 0 40px rgba(124, 58, 237, 0.2) !important; }
+        .boss-label { background: var(--boss-color); color: white; padding: 6px 16px; border-radius: 12px; font-size: 0.8rem; position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-weight: 900; letter-spacing: 2px;}
+        .timer-warn { color: var(--danger) !important; border-color: var(--danger) !important; animation: pulse-danger 1s infinite; }
 
-        .feedback { margin-bottom: 20px; padding: 1.2rem; border-radius: 20px; background: #f8fafc; animation: popIn 0.3s ease; text-align: center; border: 2px solid #e2e8f0;}
-        .feedback h4 { margin-bottom: 4px; font-size: 1.2rem; font-weight: 800; color: #1e293b;}
-        .hint { font-size: 0.95rem; color: var(--game-text-muted); line-height: 1.4; font-weight: 600;}
+        /* Фидбек */
+        .feedback { margin-bottom: 20px; padding: 20px; border-radius: 24px; background: #f8fafc; animation: popIn 0.3s ease; text-align: center; border: 2px solid var(--game-border);}
+        .feedback h4 { margin-bottom: 8px; font-size: 1.3rem; font-weight: 900; color: var(--game-text);}
+        .hint { font-size: 1rem; color: var(--game-text-muted); line-height: 1.4; font-weight: 600;}
 
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white; padding: 1.2rem; border-radius: 20px; border: none; font-weight: 900;
-            cursor: pointer; width: 100%; font-size: 1.2rem; box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
-            user-select: none;
-        }
-        .btn-primary:active { transform: scale(0.98); }
+        /* Результаты */
+        .results-box { background: var(--game-bg); border-radius: 28px; padding: 32px; width: 100%; border: 2px solid var(--game-border); text-align: center; margin-bottom: 30px;}
+        .res-val { font-size: 3rem; color: var(--game-text); font-weight: 900; line-height: 1;}
+        .res-label { color: var(--game-text-muted); font-weight: 800; font-size: 0.9rem; margin-bottom: 15px; display: block; letter-spacing: 1px;}
 
+        /* Анимации */
         @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-        
-        .boss-mode { border-color: var(--boss) !important; background: #faf5ff !important; box-shadow: 0 0 30px rgba(124, 58, 237, 0.3) !important; animation: pulse-boss 2s infinite;}
-        @keyframes pulse-boss { 0% { box-shadow: 0 0 20px rgba(124, 58, 237, 0.2); } 50% { box-shadow: 0 0 40px rgba(124, 58, 237, 0.5); } 100% { box-shadow: 0 0 20px rgba(124, 58, 237, 0.2); } }
-        
-        .boss-label { background: var(--boss); color: white; padding: 6px 16px; border-radius: 12px; font-size: 0.8rem; position: absolute; top: -15px; left: 50%; transform: translateX(-50%); font-weight: 900; letter-spacing: 2px;}
-        .timer-warn { color: var(--danger) !important; border-color: var(--danger) !important; animation: shake 0.5s infinite; }
-        
-        #screen-menu, #screen-game, #screen-results { flex-grow: 1; display: flex; flex-direction: column; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+        @keyframes pulse-danger { 0% { box-shadow: 0 0 0 rgba(239, 68, 68, 0.4); } 50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.6); } 100% { box-shadow: 0 0 0 rgba(239, 68, 68, 0.4); } }
     </style>
 </head>
 <body>
 
-    <!-- ==================== ЭКРАН АНАЛИТИКИ (HUB) ==================== -->
-    <div class="container" id="screen-analytics">
+    <!-- ==================== SCREEN 1: ANALYTICS HUB ==================== -->
+    <main class="hub-container" id="hub-view">
+        <!-- Блок прогноза -->
         <div class="predict-card">
-            <span style="font-size: 0.9rem; font-weight: 600; opacity: 0.9;">Если экзамен сегодня (прогноз)</span>
-            <div class="predict-range" id="score-range">-- — --</div>
+            <span style="font-size: 0.95rem; font-weight: 600; opacity: 0.9;">Прогноз балла ЕГЭ</span>
+            <div class="predict-range" id="ui-score-range">-- — --</div>
             <div class="goal-bar">
-                <span>Цель: <b>90+</b></span>
-                <span id="goal-delta">До цели: --</span>
+                <span>Твоя цель: <b id="ui-goal-val">90+</b></span>
+                <span id="ui-goal-delta" style="font-weight: 700;">--</span>
             </div>
-            <div style="font-size: 0.75rem; margin-top: 12px; opacity: 0.8;" id="forecast-details"></div>
+            <div style="font-size: 0.8rem; margin-top: 16px; opacity: 0.85; font-weight: 500;" id="ui-forecast-details"></div>
         </div>
-        <div class="panel" style="background: rgba(244, 63, 94, 0.05); border: 1px dashed var(--critical);">
-            <div style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px;">Больше всего тянут вниз</div>
-            <div id="diagnosis-list"></div>
+
+        <!-- Критические зоны -->
+        <div class="glass-panel" style="background: rgba(244, 63, 94, 0.05); border: 1px dashed rgba(244, 63, 94, 0.3);">
+            <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-2); letter-spacing: 1px;">Тянут балл вниз</div>
+            <div id="ui-diagnosis-list"></div>
         </div>
-        <div class="panel">
-            <div id="dynamic-insight" style="margin-bottom: 15px;"></div>
-            <h3 style="margin: 0; font-size: 1.1rem;">Твой план на сегодня</h3>
-            <div id="smart-task-container"></div>
+
+        <!-- Фокус дня -->
+        <div class="glass-panel">
+            <div id="ui-dynamic-insight" style="margin-bottom: 16px;"></div>
+            <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 8px;">План на сегодня</h3>
+            <div id="ui-smart-task"></div>
         </div>
-        <div class="panel">
-            <h3 style="margin: 0; font-size: 1rem;">Итоги недели</h3>
-            <div class="summary-grid" id="weekly-summary"></div>
+
+        <!-- Итоги -->
+        <div class="glass-panel">
+            <h3 style="font-size: 1.2rem; font-weight: 800;">Твоя статистика</h3>
+            <div class="summary-grid" id="ui-weekly-summary"></div>
         </div>
-        <div class="panel">
-            <h3 style="margin: 0; font-size: 1.1rem; margin-bottom: 15px;">Карта твоих зон</h3>
-            <div id="topics-list"></div>
+
+        <!-- Все темы -->
+        <div class="glass-panel" style="padding-bottom: 8px;">
+            <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 20px;">Карта тем</h3>
+            <div id="ui-topics-list"></div>
+        </div>
+    </main>
+
+
+    <!-- ==================== SCREEN 2: THEORY OVERLAY ==================== -->
+    <div class="overlay" id="theory-overlay">
+        <div class="theory-card">
+            <button class="exit-btn dark-mode" onclick="AppUI.hideTheory()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </button>
+            
+            <div class="theory-content">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <div style="font-size: 4rem; margin-bottom: 16px; text-shadow: 0 10px 30px rgba(168, 85, 247, 0.3);">📖</div>
+                    <h2 id="theory-title" style="font-size: 1.6rem; font-weight: 800; background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Задание 10</h2>
+                    <p style="color: var(--text-2); font-size: 0.9rem; margin-top: 8px; font-weight: 600;">Приставки ПРЕ- и ПРИ-</p>
+                </div>
+                
+                <div class="theory-block">
+                    <h3>🟢 Приставка ПРЕ-</h3>
+                    <ul>
+                        <li><span class="hl">Степень качества</span> (можно заменить на «очень»): <i>премилый, премудрый</i>.</li>
+                        <li><span class="hl">Близость к «пере»</span> (иное действие): <i>преградить, преступить</i>.</li>
+                    </ul>
+                </div>
+
+                <div class="theory-block">
+                    <h3>🔵 Приставка ПРИ-</h3>
+                    <ul>
+                        <li><span class="hl">Приближение / Присоединение:</span> <i>приехать, пришить</i>.</li>
+                        <li><span class="hl">Близость (около):</span> <i>приморский, пришкольный</i>.</li>
+                        <li><span class="hl">Неполнота действия:</span> <i>присесть, приоткрыть</i>.</li>
+                        <li><span class="hl">Доведение до конца:</span> <i>придумать, приучить</i>.</li>
+                    </ul>
+                </div>
+
+                <div class="theory-block">
+                    <h3>⚠️ Словарные боссы (Запомнить)</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-2); margin-bottom: 12px; line-height: 1.4;">Эти слова не подчиняются правилам. Их нужно знать в лицо.</p>
+                    <div class="vocab-grid">
+                        <div class="vocab-word">прЕзидент</div>
+                        <div class="vocab-word">прИвилегия</div>
+                        <div class="vocab-word">прЕрогатива</div>
+                        <div class="vocab-word">прИоритет</div>
+                        <div class="vocab-word">прЕтензия</div>
+                        <div class="vocab-word">прИмитивный</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="padding: 20px 24px; border-top: 1px solid rgba(255,255,255,0.05); background: var(--surface-1);">
+                <button class="btn-primary" onclick="AppUI.hideTheory()">ПОНЯТНО, СПАСИБО</button>
+            </div>
         </div>
     </div>
 
-    <!-- ==================== ЭКРАН ИГРЫ (OVERLAY) ==================== -->
-    <div class="game-overlay hidden" id="screen-game-wrapper">
-        <div class="app-card">
+
+    <!-- ==================== SCREEN 3: GAME OVERLAY ==================== -->
+    <div class="overlay" id="game-overlay">
+        <div class="game-card">
             
-            <!-- Кнопки управления шапкой игры -->
-            <button id="back-to-analytics" class="exit-btn" onclick="closeGameMenu()" title="В аналитику">
+            <!-- Controls -->
+            <button id="btn-back-hub" class="exit-btn" onclick="AppUI.hideGame()">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
             </button>
-            <button id="exit-game" class="exit-btn hidden" onclick="confirmExit()" title="Выйти в меню">
+            <button id="btn-quit-game" class="exit-btn hidden" onclick="GameEngine.confirmQuit()">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
             </button>
 
-            <!-- МЕНЮ ИГРЫ -->
-            <div id="screen-menu">
+            <!-- VIEW: Game Menu -->
+            <div id="game-view-menu" style="display: flex; flex-direction: column; height: 100%;">
                 <h1 class="game-title">ПРЕ или ПРИ?</h1>
-                <p class="game-subtitle">Тренировка для ЕГЭ</p>
+                <p class="game-subtitle">Выбери режим тренировки</p>
                 
                 <div class="mode-list">
-                    <div class="mode-item active" onclick="setMode('classic', this)">
+                    <div class="mode-item active" data-mode="classic" onclick="AppUI.selectGameMode('classic', this)">
                         <div class="mode-icon">❤️</div>
                         <div class="mode-info">
                             <h3>Классика</h3>
-                            <p>3 жизни. Традиционный тест.</p>
+                            <p>3 права на ошибку.</p>
                         </div>
-                        <div class="best-badge" id="rec-classic">0</div>
+                        <div class="best-badge" id="badge-classic">0</div>
                     </div>
 
-                    <div class="mode-item" onclick="setMode('combo', this)">
+                    <div class="mode-item" data-mode="combo" onclick="AppUI.selectGameMode('combo', this)">
                         <div class="mode-icon">🔥</div>
                         <div class="mode-info">
-                            <h3>Комбо-мастер</h3>
-                            <p>До первой ошибки. Турбо-режим.</p>
+                            <h3>Хардкор</h3>
+                            <p>Игра до первой ошибки.</p>
                         </div>
-                        <div class="best-badge" id="rec-combo">0</div>
+                        <div class="best-badge" id="badge-combo">0</div>
                     </div>
 
-                    <div class="mode-item" onclick="setMode('boss', this)">
+                    <div class="mode-item" data-mode="boss" onclick="AppUI.selectGameMode('boss', this)">
                         <div class="mode-icon">👾</div>
                         <div class="mode-info">
                             <h3>Словарные Боссы</h3>
                             <p>Сложные слова каждые 5 ходов.</p>
                         </div>
-                        <div class="best-badge" id="rec-boss">0</div>
+                        <div class="best-badge" id="badge-boss">0</div>
                     </div>
 
-                    <div class="mode-item" onclick="setMode('time', this)">
+                    <div class="mode-item" data-mode="time" onclick="AppUI.selectGameMode('time', this)">
                         <div class="mode-icon">⏳</div>
                         <div class="mode-info">
-                            <h3>Забег на время</h3>
-                            <p>30 секунд. Верный ответ = +2 сек.</p>
+                            <h3>Тайм-Атака</h3>
+                            <p>30 сек. Верный ответ = +2 сек.</p>
                         </div>
-                        <div class="best-badge" id="rec-time">0</div>
+                        <div class="best-badge" id="badge-time">0</div>
                     </div>
                 </div>
 
-                <button class="btn-primary" style="margin-top: auto; margin-bottom: 10px;" onclick="startNewGame()">ИГРАТЬ</button>
+                <div style="margin-top: auto;">
+                    <button class="btn-primary" onclick="GameEngine.start()">НАЧАТЬ ИГРУ</button>
+                </div>
             </div>
 
-            <!-- ИГРОВОЙ ПРОЦЕСС -->
-            <div id="screen-game" class="hidden">
+            <!-- VIEW: Game Play -->
+            <div id="game-view-play" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
                 <div class="game-header">
-                    <div id="lives-box" class="stat-pill">❤️❤️❤️</div>
-                    <div id="timer-box" class="stat-pill hidden">00:30</div>
-                    <div class="stat-pill">Счёт: <span id="score-val">0</span></div>
+                    <div id="ui-game-lives" class="stat-pill">❤️❤️❤️</div>
+                    <div id="ui-game-timer" class="stat-pill hidden">00:30</div>
+                    <div class="stat-pill" style="color: var(--primary);">Счёт: <span id="ui-game-score">0</span></div>
                 </div>
 
-                <div id="combo-title" style="font-weight: 900; color: var(--warning); height: 20px; font-size: 0.9rem; text-align: center; text-transform: uppercase;"></div>
+                <div id="ui-game-combo-text" style="font-weight: 900; color: var(--warning); height: 20px; font-size: 0.9rem; text-align: center; text-transform: uppercase;"></div>
 
-                <div class="word-box" id="word-box">
-                    <div id="boss-tag" class="boss-label hidden">БОСС</div>
-                    <div class="word-text" id="word-display">пр<span>_</span>вратить</div>
+                <div class="word-box" id="ui-game-wordbox">
+                    <div id="ui-game-boss-tag" class="boss-label hidden">БОСС</div>
+                    <div class="word-text" id="ui-game-word">пр<span>_</span>вратить</div>
                 </div>
 
-                <div id="feedback" class="feedback hidden">
-                    <h4 id="fb-title">Верно!</h4>
-                    <p id="fb-hint" class="hint"></p>
-                    <button id="next-btn" class="btn-primary" style="padding: 0.8rem; margin-top: 10px;" onclick="nextStep()">Далее</button>
+                <div id="ui-game-feedback" class="feedback hidden">
+                    <h4 id="ui-fb-title">Верно!</h4>
+                    <p id="ui-fb-hint" class="hint"></p>
+                    <button id="ui-btn-next" class="btn-primary" style="padding: 14px; margin-top: 12px;" onclick="GameEngine.nextWord()">Далее</button>
                 </div>
 
-                <div class="choices">
-                    <button class="btn-choice" id="btn-е" onclick="handleAnswer('е')">Е</button>
-                    <button class="btn-choice" id="btn-и" onclick="handleAnswer('и')">И</button>
+                <div class="choices" id="ui-game-choices">
+                    <button class="btn-choice" id="btn-ans-е" onclick="GameEngine.handleAnswer('е')">Е</button>
+                    <button class="btn-choice" id="btn-ans-и" onclick="GameEngine.handleAnswer('и')">И</button>
                 </div>
             </div>
 
-            <!-- РЕЗУЛЬТАТЫ ИГРЫ -->
-            <div id="screen-results" class="hidden">
+            <!-- VIEW: Game Results -->
+            <div id="game-view-results" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
                 <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                    <h2 id="res-status" style="font-size: 2rem; color: #1e293b; font-weight: 900;">Потрачено</h2>
-                    <div id="res-rank" style="font-size: 6rem; font-weight: 900; margin: 10px 0; color: var(--warning); text-shadow: 0 10px 20px rgba(245,158,11,0.3);">S</div>
+                    <h2 id="ui-res-title" style="font-size: 2.2rem; color: var(--game-text); font-weight: 900; text-align: center;">Тренировка завершена</h2>
+                    <div id="ui-res-rank" style="font-size: 7rem; font-weight: 900; margin: 10px 0; color: var(--warning); text-shadow: 0 10px 30px rgba(245,158,11,0.3); line-height: 1;">S</div>
                     
-                    <div style="background: #f8fafc; border-radius: 24px; padding: 2rem; width: 100%; border: 2px solid #e2e8f0; text-align: center; font-size: 1.2rem;">
-                        <p style="margin-bottom: 10px; color: var(--game-text-muted); font-weight: 700;">ОЧКИ <br><b id="res-score" style="font-size: 2.5rem; color: #1e293b;">0</b></p>
-                        <p style="color: var(--game-text-muted); font-weight: 700;">ТОЧНОСТЬ <br><b id="res-acc" style="font-size: 1.5rem; color: #1e293b;">0%</b></p>
+                    <div class="results-box">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div style="flex: 1;">
+                                <span class="res-label">ОЧКИ</span>
+                                <span class="res-val" id="ui-res-score" style="color: var(--primary);">0</span>
+                            </div>
+                            <div style="width: 2px; background: var(--game-border); margin: 0 15px;"></div>
+                            <div style="flex: 1;">
+                                <span class="res-label">ТОЧНОСТЬ</span>
+                                <span class="res-val" id="ui-res-acc">0%</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 10px; width: 100%; margin-bottom: 10px;">
-                    <button class="btn-primary" style="flex: 1; font-size: 1rem;" onclick="showMenu()">МЕНЮ</button>
-                    <button class="btn-primary" style="flex: 1; font-size: 1rem; background: var(--success);" onclick="closeGameMenu()">В АНАЛИТИКУ</button>
+                <div style="display: flex; gap: 12px; margin-top: auto;">
+                    <button class="btn-primary" style="flex: 1; background: var(--game-surface); color: var(--game-text); border: 2px solid var(--game-border); box-shadow: none;" onclick="AppUI.showGameMenu()">МЕНЮ</button>
+                    <button class="btn-primary" style="flex: 2; background: var(--success);" onclick="AppUI.hideGameAndSync()">В АНАЛИТИКУ</button>
                 </div>
             </div>
+
         </div>
     </div>
 
 <script>
-    // ==================== ЛОГИКА АНАЛИТИКИ ====================
-    let userStats = {
-        targetScore: 90,
-        lastAnswers: 148,
-        topics: [
-            { id: 10, title: "Задание 10: ПРЕ/ПРИ", score: 48, stability: 42, weight: 1.5, change: +14, reason: "Быстрый рост балла" },
-            { id: 16, title: "Задание 16: Пунктуация", score: 32, stability: 24, weight: 2.0, change: -5, reason: "Критическая потеря" },
-            { id: 11, title: "Задание 11: Суффиксы", score: 91, stability: 88, weight: 1.2, change: +2, reason: "Сильная зона" },
-            { id: 12, title: "Задание 12: Глаголы", score: 65, stability: 55, weight: 1.8, change: -2, reason: "Нужно закрепить" }
-        ]
-    };
-
-    const Brain = {
-        getPriority(topic) {
-            const weakPart = (100 - topic.score) / 100;
-            const stabilityPart = (100 - topic.stability) / 100;
-            return weakPart * topic.weight * (1 + stabilityPart);
-        },
-        getStatus(score) {
-            if (score < 35) return { label: 'Критично', class: 's-critical', color: 'var(--critical)' };
-            if (score < 55) return { label: 'Риск', class: 's-risk', color: 'var(--warning)' };
-            if (score < 75) return { label: 'Нестабильно', class: 's-unstable', color: '#eab308' };
-            if (score < 90) return { label: 'Уверенно', class: 's-confident', color: 'var(--success)' };
-            return { label: 'Сильная зона', class: 's-perfect', color: 'var(--perfect)' };
-        },
-        calculateWeightedForecast(stats) {
-            let totalWeight = 0; let weightedScore = 0;
-            stats.topics.forEach(t => {
-                const realExpectation = t.score * (0.8 + (t.stability / 100) * 0.2);
-                weightedScore += realExpectation * t.weight;
-                totalWeight += t.weight;
-            });
-            const base = weightedScore / totalWeight;
-            const min = Math.round(base - (5 + (1 - base/100) * 5));
-            const max = Math.round(base + (3 + (base/100) * 5));
-            return { min, max, base };
+    /* ==================== 1. CONSTANTS & DATA ==================== */
+    
+    const CONSTANTS = {
+        STORAGE_KEY: 'PRO_RUSSIAN_STATS',
+        TARGET_SCORE: 90,
+        GAME: {
+            LIVES_CLASSIC: 3,
+            TIME_START: 30,
+            TIME_BONUS: 2,
+            TIME_PENALTY: 3,
+            BASE_POINTS: 10,
+            COMBO_MULTIPLIER: 2
         }
     };
 
-    function renderAnalytics() {
-        const forecast = Brain.calculateWeightedForecast(userStats);
-        const sortedByPriority = [...userStats.topics].sort((a,b) => Brain.getPriority(b) - Brain.getPriority(a));
-        
-        document.getElementById('score-range').innerText = `${forecast.min} — ${forecast.max}`;
-        const delta = Math.max(0, userStats.targetScore - forecast.max);
-        document.getElementById('goal-delta').innerHTML = delta === 0 ? "<b>Цель достигнута!</b>" : `До цели: <b>${delta} баллов</b>`;
-        document.getElementById('forecast-details').innerText = `Главный риск: ${sortedByPriority[0].title.split(': ')[1]}. Шанс роста: +${(Brain.getPriority(sortedByPriority[0])).toFixed(1)} балла.`;
-        document.getElementById('diagnosis-list').innerHTML = sortedByPriority.slice(0, 3).map(t => `<div class="diagnosis-item">● ${t.title.split(': ')[1].toLowerCase()}</div>`).join('');
-        
-        const improved = userStats.topics.find(t => t.change > 10);
-        const declined = userStats.topics.find(t => t.change < -3);
-        const insightBox = document.getElementById('dynamic-insight');
-        if (improved) {
-            insightBox.innerHTML = `<span style="color: var(--success); font-weight: 700; font-size: 0.85rem;">✨ ${improved.title.split(': ')[1]} вышли из зоны риска!</span>`;
-        } else if (declined) {
-            insightBox.innerHTML = `<span style="color: var(--danger); font-weight: 700; font-size: 0.85rem;">⚠️ Внимание: ${declined.title.split(': ')[1]} требуют возврата.</span>`;
-        } else {
-            insightBox.innerHTML = `<span style="color: var(--text-muted); font-size: 0.85rem;">📈 Сегодня без резких сдвигов. Работаем на стабильность.</span>`;
-        }
-        
-        const mainTask = sortedByPriority[0];
-        const isMainTaskGameable = mainTask.id === 10;
-        document.getElementById('smart-task-container').innerHTML = `
-            <div class="smart-task">
-                <span class="reason-badge">${mainTask.reason}</span>
-                <h4 style="margin: 5px 0;">Фокус: ${mainTask.title}</h4>
-                <p style="font-size: 0.75rem; color: var(--text-muted); margin: 10px 0;">Эффект: +${(Brain.getPriority(mainTask)/2).toFixed(1)} к уверенности прогноза.</p>
-                <div class="btn-group">
-                    <button class="btn-action primary" onclick="${isMainTaskGameable ? 'openGameMenu()' : 'alert(\'Модуль в разработке. Доступно Задание 10\')'}">НАЧАТЬ (20 МИН)</button>
-                    <button class="btn-action">ОШИБКИ</button>
-                </div>
-            </div>
-        `;
-        
-        const upCount = userStats.topics.filter(t => t.change > 0).length;
-        const downCount = userStats.topics.filter(t => t.change < 0).length;
-        document.getElementById('weekly-summary').innerHTML = `
-            <div class="summary-item">Улучшено тем: <b>${upCount}</b></div>
-            <div class="summary-item">Просадка: <b style="color:var(--danger)">${downCount}</b></div>
-            <div class="summary-item">Стабильность: <b>${(userStats.topics.reduce((a,b)=>a+b.stability,0)/userStats.topics.length).toFixed(0)}%</b></div>
-            <div class="summary-item">Риск системы: <b>Низкий</b></div>
-        `;
-        
-        document.getElementById('topics-list').innerHTML = userStats.topics.map(t => {
-            const status = Brain.getStatus(t.score);
-            const isGameable = t.id === 10;
-            const btnAction = isGameable ? 'onclick="openGameMenu()"' : 'onclick="alert(\'Модуль в разработке\')"';
-            const highlightStyle = isGameable ? 'style="background: var(--primary); color: white;"' : '';
-            return `
-                <div class="topic-row">
-                    <div class="topic-meta">
-                        <span style="font-weight: 700; font-size: 0.9rem;">${t.title}</span>
-                        <span class="status-pill ${status.class}">${status.label}</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="flex-grow: 1;">
-                            <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; margin-bottom: 4px;">
-                                <div style="width: ${t.score}%; height: 100%; background: ${status.color};"></div>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text-muted);">
-                                <span>Стабильность: ${t.stability}%</span>
-                                <span style="color: ${t.change >= 0 ? 'var(--success)' : 'var(--danger)'}">${t.change >= 0 ? '↑' : '↓'} ${Math.abs(t.change)}%</span>
-                            </div>
-                        </div>
-                        <span style="font-weight: 800; font-size: 0.85rem; min-width: 35px; text-align: right;">${t.score}%</span>
-                    </div>
-                    <div class="btn-group">
-                        <button class="btn-action">Теория</button>
-                        <button class="btn-action" ${btnAction} ${highlightStyle}>Тренировка</button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    renderAnalytics(); // Первичный рендер
-
-    // ==================== ЛОГИКА ИНТЕГРАЦИИ (МОСТ) ====================
-    function openGameMenu() {
-        document.getElementById('screen-game-wrapper').classList.remove('hidden');
-        document.body.classList.add('no-scroll');
-        switchGameScreen('screen-menu');
-        updateRecords();
-    }
-
-    function closeGameMenu() {
-        document.getElementById('screen-game-wrapper').classList.add('hidden');
-        document.body.classList.remove('no-scroll');
-        
-        // Синхронизация прогресса (Fake-улучшение статистики, если поиграли)
-        if (state.score > 0) {
-            const topic = userStats.topics.find(t => t.id === 10);
-            if (topic) {
-                // Немного поднимаем балл и стабильность в зависимости от счета
-                const boost = Math.ceil(state.score / 100);
-                topic.score = Math.min(100, topic.score + boost);
-                topic.stability = Math.min(100, topic.stability + boost);
-                topic.change = boost;
-            }
-            state.score = 0; // Сбрасываем кэш
-            renderAnalytics(); // Обновляем главный экран
-        }
-    }
-
-
-    // ==================== ЛОГИКА ИГРЫ ПРЕ/ПРИ ====================
-    const tg = window.Telegram ? window.Telegram.WebApp : null;
-    if(tg) { tg.expand(); tg.ready(); }
-
-    function vibrate(type) {
-        if (tg && tg.HapticFeedback) {
-            if(type === 'correct') tg.HapticFeedback.notificationOccurred('success');
-            else if(type === 'wrong') tg.HapticFeedback.notificationOccurred('error');
-            else if(type === 'tap') tg.HapticFeedback.impactOccurred('light');
-        }
-    }
-
-    const dictionary = [
+    const WORDS_DICTIONARY = [
         // ПРЕ
         { m: "беспр_кословно", a: "е", f: "беспрекословно", h: "= не переча" },
         { m: "непр_менно", a: "е", f: "непременно", h: "= без перемен" },
@@ -528,7 +514,6 @@
         { m: "пр_тензия", a: "е", f: "претензия", h: "Словарное", b: true },
         { m: "пр_увеличить", a: "е", f: "преувеличить", h: "= ОЧЕНЬ" },
         { m: "пр_успеть", a: "е", f: "преуспеть", h: "= ОЧЕНЬ" },
-        
         // ПРИ
         { m: "пр_баутка", a: "и", f: "прибаутка", h: "Словарное" },
         { m: "пр_вередливый", a: "и", f: "привередливый", h: "Капризный", b: true },
@@ -567,191 +552,526 @@
         { m: "непр_глядный", a: "и", f: "неприглядный", h: "Словарное" }
     ];
 
-    let state = { mode: 'classic', score: 0, lives: 3, combo: 0, index: 0, correct: 0, shuffled: [], timer: null, time: 30, isWaiting: false };
+    const DEFAULT_TOPICS = [
+        { id: 10, title: "Задание 10: ПРЕ/ПРИ", score: 45, stability: 40, weight: 1.5, change: 0, hasGame: true },
+        { id: 11, title: "Задание 11: Суффиксы", score: 60, stability: 55, weight: 1.2, change: 0, hasGame: false },
+        { id: 12, title: "Задание 12: Глаголы", score: 35, stability: 30, weight: 1.8, change: 0, hasGame: false },
+        { id: 16, title: "Задание 16: Пунктуация", score: 85, stability: 80, weight: 2.0, change: 0, hasGame: false }
+    ];
 
-    function setMode(mode, el) {
-        vibrate('tap');
-        state.mode = mode;
-        document.querySelectorAll('.mode-item').forEach(i => i.classList.remove('active'));
-        el.classList.add('active');
-    }
 
-    function confirmExit() {
-        vibrate('tap');
-        if(confirm("Прервать игру и выйти в меню?")) showMenu();
-    }
-
-    function showMenu() {
-        clearInterval(state.timer);
-        switchGameScreen('screen-menu');
-        updateRecords();
-    }
-
-    function updateRecords() {
-        ['classic', 'combo', 'boss', 'time'].forEach(m => {
-            document.getElementById(`rec-${m}`).textContent = localStorage.getItem(`prePri_${m}`) || 0;
-        });
-    }
-
-    function startNewGame() {
-        vibrate('tap');
-        state.score = 0; state.lives = 3; state.combo = 0; state.correct = 0; state.index = 0; state.time = 30; state.isWaiting = false;
-        
-        if(state.mode === 'boss') {
-            let bossCards = dictionary.filter(w => w.b);
-            let normalCards = dictionary.filter(w => !w.b).sort(() => Math.random() - 0.5);
-            state.shuffled = [];
-            for(let i=0; i<30; i++) {
-                if((i+1)%5 === 0) state.shuffled.push(bossCards[Math.floor(Math.random()*bossCards.length)]);
-                else state.shuffled.push(normalCards.pop());
+    /* ==================== 2. HELPERS ==================== */
+    
+    const Helpers = {
+        tgVibrate(type) {
+            const tg = window.Telegram?.WebApp;
+            if (tg?.HapticFeedback) {
+                if (type === 'correct') tg.HapticFeedback.notificationOccurred('success');
+                else if (type === 'wrong') tg.HapticFeedback.notificationOccurred('error');
+                else if (type === 'tap') tg.HapticFeedback.impactOccurred('light');
             }
-        } else {
-            state.shuffled = [...dictionary].sort(() => Math.random() - 0.5);
+        },
+        formatTime(sec) {
+            return `00:${sec < 10 ? '0' + sec : sec}`;
+        },
+        shuffle(array) {
+            return [...array].sort(() => Math.random() - 0.5);
         }
+    };
 
-        switchGameScreen('screen-game');
-        
-        document.getElementById('lives-box').classList.toggle('hidden', state.mode === 'time' || state.mode === 'combo');
-        document.getElementById('timer-box').classList.toggle('hidden', state.mode !== 'time');
-        document.getElementById('timer-box').classList.remove('timer-warn');
-        
-        if(state.mode === 'time') startClock();
-        
-        renderWord();
-        updateStats();
-    }
 
-    function startClock() {
-        clearInterval(state.timer);
-        document.getElementById('timer-box').textContent = `00:${state.time}`;
-        state.timer = setInterval(() => {
-            state.time--;
-            document.getElementById('timer-box').textContent = `00:${state.time < 10 ? '0'+state.time : state.time}`;
-            if(state.time <= 5) document.getElementById('timer-box').classList.add('timer-warn');
-            else document.getElementById('timer-box').classList.remove('timer-warn');
-            if(state.time <= 0) finishGame();
-        }, 1000);
-    }
-
-    function renderWord() {
-        if(state.index >= state.shuffled.length) { finishGame(); return; }
+    /* ==================== 3. STATE & STORAGE ==================== */
+    
+    const Store = {
+        data: {
+            topics: [],
+            gameRecords: { classic: 0, combo: 0, boss: 0, time: 0 }
+        },
         
-        state.isWaiting = false;
-        let word = state.shuffled[state.index];
-        document.getElementById('word-display').innerHTML = word.m.replace('_', '<span>_</span>');
-        document.getElementById('word-box').classList.toggle('boss-mode', !!word.b && state.mode === 'boss');
-        document.getElementById('boss-tag').classList.toggle('hidden', !(word.b && state.mode === 'boss'));
-        
-        document.getElementById('feedback').classList.add('hidden');
-        document.querySelectorAll('.btn-choice').forEach(b => {
-            b.disabled = false;
-            b.classList.remove('correct', 'wrong');
-        });
-        
-        const titles = ["", "Хорошо!", "В потоке!", "ОГОНЬ! 🔥", "ЛЕГЕНДА! 👑"];
-        document.getElementById('combo-title').textContent = state.combo > 2 ? titles[Math.min(Math.floor(state.combo/3), 4)] : "";
-    }
+        init() {
+            try {
+                const saved = localStorage.getItem(CONSTANTS.STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    // Merge saved topics with default structure to prevent app breaking on updates
+                    this.data.topics = DEFAULT_TOPICS.map(def => {
+                        const savedTopic = parsed.topics?.find(t => t.id === def.id);
+                        return savedTopic ? { ...def, ...savedTopic } : def;
+                    });
+                    this.data.gameRecords = parsed.gameRecords || this.data.gameRecords;
+                } else {
+                    this.data.topics = JSON.parse(JSON.stringify(DEFAULT_TOPICS));
+                }
+            } catch (e) {
+                this.data.topics = JSON.parse(JSON.stringify(DEFAULT_TOPICS));
+            }
+        },
 
-    function handleAnswer(ans) {
-        if(state.isWaiting) return;
-        state.isWaiting = true;
+        save() {
+            localStorage.setItem(CONSTANTS.STORAGE_KEY, JSON.stringify(this.data));
+        },
 
-        let word = state.shuffled[state.index];
-        let isCorrect = ans === word.a;
-        let btns = document.querySelectorAll('.btn-choice');
-        btns.forEach(b => b.disabled = true);
+        updateGameRecord(mode, score) {
+            if (score > this.data.gameRecords[mode]) {
+                this.data.gameRecords[mode] = score;
+                this.save();
+            }
+        },
 
-        if(isCorrect) {
-            vibrate('correct');
-            state.correct++; state.combo++;
-            state.score += (10 + state.combo * 2);
-            if(state.mode === 'time') state.time += 2;
+        // CORE BUSINESS LOGIC: Real progress update based on math
+        syncAnalyticsFromGame(topicId, gameScore, gameAccuracy) {
+            if (gameScore === 0 && gameAccuracy === 0) return; // Ignore early quits with no answers
+
+            const topic = this.data.topics.find(t => t.id === topicId);
+            if (!topic) return;
+
+            const oldScore = topic.score;
             
-            document.getElementById(`btn-${ans}`).classList.add('correct');
-            document.getElementById('fb-title').textContent = "Верно! ✨";
-            document.getElementById('fb-title').style.color = "var(--success)";
-        } else {
-            vibrate('wrong');
-            state.combo = 0;
-            if(state.mode === 'classic') state.lives--;
-            if(state.mode === 'boss' && word.b) state.lives = 0;
-            if(state.mode === 'time') state.time -= 3;
+            // 1. Score update: Moving average (70% history, 30% new session)
+            // Cap at 100
+            const newScoreRaw = (oldScore * 0.7) + (gameAccuracy * 0.3);
+            topic.score = Math.min(100, Math.round(newScoreRaw));
+            topic.change = topic.score - oldScore;
+
+            // 2. Stability update: Did user confirm their skill?
+            if (gameAccuracy >= topic.score) {
+                // Good session: increase stability
+                topic.stability = Math.min(100, topic.stability + 5);
+            } else if (gameAccuracy < topic.score - 20) {
+                // Bad session: drop stability
+                topic.stability = Math.max(0, topic.stability - 8);
+            } else {
+                // Average session: minor boost
+                topic.stability = Math.min(100, topic.stability + 1);
+            }
+
+            this.save();
+        }
+    };
+
+
+    /* ==================== 4. ANALYTICS ENGINE ==================== */
+    
+    const Analytics = {
+        getPriority(topic) {
+            const weakPart = (100 - topic.score) / 100;
+            const stabilityPart = (100 - topic.stability) / 100;
+            return weakPart * topic.weight * (1 + stabilityPart);
+        },
+        
+        getStatus(score) {
+            if (score < 35) return { label: 'Критично', class: 's-critical', color: 'var(--critical)' };
+            if (score < 55) return { label: 'Риск', class: 's-risk', color: 'var(--warning)' };
+            if (score < 75) return { label: 'Нестабильно', class: 's-unstable', color: '#eab308' };
+            if (score < 90) return { label: 'Уверенно', class: 's-confident', color: 'var(--success)' };
+            return { label: 'Идеально', class: 's-perfect', color: 'var(--perfect)' };
+        },
+
+        calculateForecast() {
+            let totalWeight = 0, weightedScore = 0;
+            Store.data.topics.forEach(t => {
+                // Real expectation depends on base score and how stable it is
+                const realExpectation = t.score * (0.8 + (t.stability / 100) * 0.2);
+                weightedScore += realExpectation * t.weight;
+                totalWeight += t.weight;
+            });
+            const base = weightedScore / totalWeight;
+            const min = Math.round(base - (5 + (1 - base/100) * 5));
+            const max = Math.round(base + (3 + (base/100) * 5));
+            return { min: Math.max(0, min), max: Math.min(100, max) };
+        }
+    };
+
+
+    /* ==================== 5. GAME ENGINE ==================== */
+    
+    const GameEngine = {
+        state: {
+            mode: 'classic',
+            score: 0,
+            lives: 3,
+            combo: 0,
+            index: 0,
+            correctAns: 0,
+            deck: [],
+            timeLeft: 0,
+            timerId: null,
+            isWaiting: false
+        },
+
+        start() {
+            Helpers.tgVibrate('tap');
+            AppUI.switchGameView('play');
+
+            this.state.score = 0;
+            this.state.lives = CONSTANTS.GAME.LIVES_CLASSIC;
+            this.state.combo = 0;
+            this.state.correctAns = 0;
+            this.state.index = 0;
+            this.state.isWaiting = false;
+
+            // Generate Deck
+            if (this.state.mode === 'boss') {
+                const bosses = WORDS_DICTIONARY.filter(w => w.b);
+                const normals = Helpers.shuffle(WORDS_DICTIONARY.filter(w => !w.b));
+                this.state.deck = [];
+                for(let i=0; i<30; i++) {
+                    if ((i+1) % 5 === 0 && bosses.length) this.state.deck.push(bosses[Math.floor(Math.random()*bosses.length)]);
+                    else if (normals.length) this.state.deck.push(normals.pop());
+                }
+            } else {
+                this.state.deck = Helpers.shuffle(WORDS_DICTIONARY);
+            }
+
+            // UI Setup
+            document.getElementById('ui-game-lives').classList.toggle('hidden', ['time', 'combo'].includes(this.state.mode));
             
-            document.getElementById(`btn-${ans}`).classList.add('wrong');
-            document.getElementById(`btn-${word.a}`).classList.add('correct');
-            document.getElementById('fb-title').textContent = "Ошибка";
-            document.getElementById('fb-title').style.color = "var(--danger)";
+            const timerEl = document.getElementById('ui-game-timer');
+            if (this.state.mode === 'time') {
+                timerEl.classList.remove('hidden', 'timer-warn');
+                this.state.timeLeft = CONSTANTS.GAME.TIME_START;
+                this.startTimer();
+            } else {
+                timerEl.classList.add('hidden');
+                this.stopTimer();
+            }
+
+            this.nextWord(true);
+        },
+
+        startTimer() {
+            this.stopTimer();
+            this.updateTimerUI();
+            this.state.timerId = setInterval(() => {
+                this.state.timeLeft--;
+                this.updateTimerUI();
+                if (this.state.timeLeft <= 0) this.endGame("Время вышло!");
+            }, 1000);
+        },
+
+        stopTimer() {
+            if (this.state.timerId) clearInterval(this.state.timerId);
+            this.state.timerId = null;
+        },
+
+        updateTimerUI() {
+            const el = document.getElementById('ui-game-timer');
+            el.textContent = Helpers.formatTime(this.state.timeLeft);
+            if (this.state.timeLeft <= 5) el.classList.add('timer-warn');
+            else el.classList.remove('timer-warn');
+        },
+
+        nextWord(isFirst = false) {
+            if (!isFirst) Helpers.tgVibrate('tap');
+            
+            if (this.state.index >= this.state.deck.length) {
+                this.endGame("Слова закончились!");
+                return;
+            }
+
+            this.state.isWaiting = false;
+            const word = this.state.deck[this.state.index];
+            
+            // Reset UI
+            document.getElementById('ui-game-word').innerHTML = word.m.replace('_', '<span>_</span>');
+            
+            const isBossRound = !!word.b && this.state.mode === 'boss';
+            document.getElementById('ui-game-wordbox').classList.toggle('boss-mode', isBossRound);
+            document.getElementById('ui-game-boss-tag').classList.toggle('hidden', !isBossRound);
+            
+            document.getElementById('ui-game-feedback').classList.add('hidden');
+            ['е', 'и'].forEach(l => {
+                const btn = document.getElementById(`btn-ans-${l}`);
+                btn.disabled = false;
+                btn.className = 'btn-choice'; // Reset styles
+            });
+            
+            const titles = ["", "Хорошо!", "В потоке!", "ОГОНЬ! 🔥", "ЛЕГЕНДА! 👑"];
+            document.getElementById('ui-game-combo-text').textContent = this.state.combo > 2 ? titles[Math.min(Math.floor(this.state.combo/3), 4)] : "";
+            
+            this.updateStatsUI();
+        },
+
+        handleAnswer(ans) {
+            if (this.state.isWaiting) return;
+            this.state.isWaiting = true;
+
+            const word = this.state.deck[this.state.index];
+            const isCorrect = ans === word.a;
+            
+            // Disable buttons
+            ['е', 'и'].forEach(l => document.getElementById(`btn-ans-${l}`).disabled = true);
+
+            if (isCorrect) {
+                Helpers.tgVibrate('correct');
+                this.state.correctAns++;
+                this.state.combo++;
+                this.state.score += (CONSTANTS.GAME.BASE_POINTS + this.state.combo * CONSTANTS.GAME.COMBO_MULTIPLIER);
+                if (this.state.mode === 'time') this.state.timeLeft += CONSTANTS.GAME.TIME_BONUS;
+                
+                document.getElementById(`btn-ans-${ans}`).classList.add('correct');
+                this.showFeedback("Верно! ✨", "var(--success)", word.h, word.f);
+            } else {
+                Helpers.tgVibrate('wrong');
+                this.state.combo = 0;
+                
+                if (this.state.mode === 'classic') this.state.lives--;
+                if (this.state.mode === 'boss' && word.b) this.state.lives = 0; // Boss insta-kill
+                if (this.state.mode === 'time') this.state.timeLeft -= CONSTANTS.GAME.TIME_PENALTY;
+                
+                document.getElementById(`btn-ans-${ans}`).classList.add('wrong');
+                document.getElementById(`btn-ans-${word.a}`).classList.add('correct');
+                this.showFeedback("Ошибка", "var(--danger)", word.h, word.f);
+            }
+
+            this.updateStatsUI();
+            this.checkGameFlow(isCorrect);
+        },
+
+        showFeedback(title, color, hint, fullWord) {
+            document.getElementById('ui-fb-title').textContent = title;
+            document.getElementById('ui-fb-title').style.color = color;
+            document.getElementById('ui-fb-hint').textContent = hint;
+            document.getElementById('ui-game-word').textContent = fullWord;
+        },
+
+        checkGameFlow(isCorrect) {
+            const isDead = this.state.lives <= 0 || (this.state.mode === 'combo' && !isCorrect);
+            
+            if (isDead) {
+                document.getElementById('ui-game-feedback').classList.remove('hidden');
+                document.getElementById('ui-btn-next').classList.add('hidden'); // Hide next button on death
+                setTimeout(() => this.endGame("Игра окончена"), 1200);
+                return;
+            }
+
+            // Seamless transitions for fast modes, explicit for slow/learning modes
+            if (this.state.mode === 'time' || this.state.mode === 'combo' || (this.state.mode === 'classic' && isCorrect)) {
+                setTimeout(() => {
+                    this.state.index++;
+                    this.nextWord();
+                }, 600);
+            } else {
+                // Show explicit NEXT button for classic errors or bosses
+                document.getElementById('ui-game-feedback').classList.remove('hidden');
+                document.getElementById('ui-btn-next').classList.remove('hidden');
+                this.state.index++;
+            }
+        },
+
+        updateStatsUI() {
+            document.getElementById('ui-game-score').textContent = this.state.score;
+            document.getElementById('ui-game-lives').textContent = '❤️'.repeat(Math.max(0, this.state.lives));
+            if(this.state.mode === 'time') this.updateTimerUI();
+        },
+
+        endGame(statusText) {
+            this.stopTimer();
+            AppUI.switchGameView('results');
+            
+            const totalPlayed = this.state.index === 0 && this.state.lives > 0 ? 0 : 
+                               (this.state.index === 0 && this.state.lives <=0 ? 1 : this.state.index);
+                               
+            const acc = totalPlayed === 0 ? 0 : Math.round((this.state.correctAns / totalPlayed) * 100);
+            
+            document.getElementById('ui-res-score').textContent = this.state.score;
+            document.getElementById('ui-res-acc').textContent = acc + "%";
+            document.getElementById('ui-res-title').textContent = statusText;
+            
+            let rank = "C";
+            if (acc > 95 && this.state.score > 100) rank = "S+";
+            else if (acc > 90) rank = "S";
+            else if (acc > 80) rank = "A";
+            else if (acc >= 60) rank = "B";
+            
+            document.getElementById('ui-res-rank').textContent = rank;
+            
+            // Save to localStorage
+            Store.updateGameRecord(this.state.mode, this.state.score);
+        },
+
+        confirmQuit() {
+            Helpers.tgVibrate('tap');
+            if(confirm("Прервать тренировку? Прогресс сессии будет утерян.")) {
+                this.stopTimer();
+                AppUI.showGameMenu();
+            }
         }
+    };
 
-        document.getElementById('fb-hint').textContent = word.h;
-        document.getElementById('word-display').textContent = word.f;
-        updateStats();
 
-        if(state.lives <= 0 || (state.mode === 'combo' && !isCorrect)) {
-            document.getElementById('feedback').classList.remove('hidden');
-            document.getElementById('next-btn').classList.add('hidden');
-            setTimeout(finishGame, 1200);
-            return;
+    /* ==================== 6. UI COORDINATOR ==================== */
+    
+    const AppUI = {
+        init() {
+            Store.init();
+            
+            // Expand Telegram WebApp if available
+            const tg = window.Telegram?.WebApp;
+            if (tg) tg.expand();
+
+            this.renderAnalytics();
+            this.updateGameRecordsUI();
+        },
+
+        // --- View Switching ---
+        showGameMenu() {
+            document.getElementById('game-overlay').classList.add('active');
+            document.body.classList.add('no-scroll');
+            this.switchGameView('menu');
+            this.updateGameRecordsUI();
+            Helpers.tgVibrate('tap');
+        },
+
+        hideGame() {
+            document.getElementById('game-overlay').classList.remove('active');
+            document.body.classList.remove('no-scroll');
+            Helpers.tgVibrate('tap');
+        },
+
+        hideGameAndSync() {
+            this.hideGame();
+            // Using Task 10 ID statically here, but scalable for future
+            Store.syncAnalyticsFromGame(10, GameEngine.state.score, 
+                Math.round((GameEngine.state.correctAns / Math.max(1, GameEngine.state.index)) * 100)
+            );
+            this.renderAnalytics();
+        },
+
+        showTheory(title) {
+            document.getElementById('theory-title').innerText = title;
+            document.getElementById('theory-overlay').classList.add('active');
+            document.body.classList.add('no-scroll');
+            Helpers.tgVibrate('tap');
+        },
+
+        hideTheory() {
+            document.getElementById('theory-overlay').classList.remove('active');
+            document.body.classList.remove('no-scroll');
+            Helpers.tgVibrate('tap');
+        },
+
+        switchGameView(viewName) {
+            ['menu', 'play', 'results'].forEach(v => document.getElementById(`game-view-${v}`).classList.add('hidden'));
+            document.getElementById(`game-view-${viewName}`).classList.remove('hidden');
+
+            const btnBack = document.getElementById('btn-back-hub');
+            const btnQuit = document.getElementById('btn-quit-game');
+            
+            if (viewName === 'menu') {
+                btnBack.classList.remove('hidden');
+                btnQuit.classList.add('hidden');
+            } else if (viewName === 'play') {
+                btnBack.classList.add('hidden');
+                btnQuit.classList.remove('hidden');
+            } else {
+                btnBack.classList.add('hidden');
+                btnQuit.classList.add('hidden');
+            }
+        },
+
+        selectGameMode(mode, element) {
+            Helpers.tgVibrate('tap');
+            GameEngine.state.mode = mode;
+            document.querySelectorAll('.mode-item').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+        },
+
+        updateGameRecordsUI() {
+            ['classic', 'combo', 'boss', 'time'].forEach(mode => {
+                document.getElementById(`badge-${mode}`).textContent = Store.data.gameRecords[mode];
+            });
+        },
+
+        // --- Rendering Analytics ---
+        renderAnalytics() {
+            const sortedTopics = [...Store.data.topics].sort((a,b) => Analytics.getPriority(b) - Analytics.getPriority(a));
+            const forecast = Analytics.calculateForecast();
+            const delta = Math.max(0, CONSTANTS.TARGET_SCORE - forecast.max);
+            
+            // Header
+            document.getElementById('ui-score-range').innerText = `${forecast.min} — ${forecast.max}`;
+            document.getElementById('ui-goal-delta').innerHTML = delta === 0 ? "<span style='color:var(--perfect)'>Достигнута!</span>" : `Ещё ${delta} б.`;
+            document.getElementById('ui-forecast-details').innerText = `Основной потенциал роста: ${sortedTopics[0].title.split(': ')[1]}`;
+
+            // Diagnosis
+            document.getElementById('ui-diagnosis-list').innerHTML = sortedTopics.slice(0, 3)
+                .filter(t => t.score < 80) // Only show actual risks
+                .map(t => `<div class="diagnosis-item">● ${t.title.split(': ')[1].toLowerCase()}</div>`)
+                .join('') || '<div style="font-size:0.8rem; margin-top:10px; color:var(--text-2);">Критических зон нет. Работаем на максимум.</div>';
+
+            // Smart Task (Focus of the day)
+            const mainTask = sortedTopics[0];
+            const isGameable = mainTask.hasGame;
+            const btnAction = isGameable ? 'AppUI.showGameMenu()' : 'alert(\'Этот тренажер пока в разработке. Доступно Задание 10.\')';
+            
+            document.getElementById('ui-smart-task').innerHTML = `
+                <div class="smart-task">
+                    <span class="reason-badge">Приоритет алгоритма</span>
+                    <h4 style="margin: 4px 0 8px; font-weight: 800; font-size:1.1rem;">${mainTask.title}</h4>
+                    <p style="font-size: 0.8rem; color: var(--text-2); margin-bottom: 16px;">Потенциал роста: ~+${(Analytics.getPriority(mainTask)/2).toFixed(1)} балла.</p>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-primary" style="padding: 12px; font-size: 0.9rem;" onclick="${btnAction}">ТРЕНИРОВАТЬ</button>
+                    </div>
+                </div>
+            `;
+
+            // Weekly Summary
+            const upCount = Store.data.topics.filter(t => t.change > 0).length;
+            const downCount = Store.data.topics.filter(t => t.change < 0).length;
+            const avgStability = Math.round(Store.data.topics.reduce((a,b) => a + b.stability, 0) / Store.data.topics.length);
+            
+            document.getElementById('ui-weekly-summary').innerHTML = `
+                <div class="summary-item">Рост тем: <b class="${upCount > 0 ? 'positive' : ''}">${upCount}</b></div>
+                <div class="summary-item">Просадки: <b class="${downCount > 0 ? 'negative' : ''}">${downCount}</b></div>
+                <div class="summary-item">Стабильность: <b style="color:var(--primary-light)">${avgStability}%</b></div>
+                <div class="summary-item">Риск: <b style="color:var(--success)">Низкий</b></div>
+            `;
+
+            // Topics Map
+            document.getElementById('ui-topics-list').innerHTML = Store.data.topics.map(t => {
+                const status = Analytics.getStatus(t.score);
+                const isAvail = t.hasGame;
+                const trainClick = isAvail ? 'AppUI.showGameMenu()' : 'alert(\'В разработке\')';
+                const theoryClick = `AppUI.showTheory('${t.title}')`;
+                
+                const trainClass = isAvail ? 'active-primary' : '';
+                const changeColor = t.change > 0 ? 'var(--success)' : (t.change < 0 ? 'var(--danger)' : 'var(--text-3)');
+                const changeArrow = t.change > 0 ? '↑' : (t.change < 0 ? '↓' : '•');
+                const changeText = t.change === 0 ? '0%' : `${changeArrow} ${Math.abs(t.change)}%`;
+
+                return `
+                    <div class="topic-row">
+                        <div class="topic-meta">
+                            <span style="font-weight: 700; font-size: 0.95rem;">${t.title}</span>
+                            <span class="status-pill ${status.class}" style="color:${status.color}; background:${status.color}15;">${status.label}</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px;">
+                            <div style="flex-grow: 1;">
+                                <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; margin-bottom: 6px;">
+                                    <div style="width: ${t.score}%; height: 100%; background: ${status.color}; border-radius: 3px; transition: width 0.5s ease;"></div>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-2); font-weight: 600;">
+                                    <span>Уверенность: ${t.stability}%</span>
+                                    <span style="color: ${changeColor}">${changeText}</span>
+                                </div>
+                            </div>
+                            <span style="font-weight: 900; font-size: 1rem; min-width: 40px; text-align: right;">${t.score}</span>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-action" style="background: rgba(99, 102, 241, 0.15); color: var(--primary-light);" onclick="${theoryClick}">Теория</button>
+                            <button class="btn-action ${trainClass}" onclick="${trainClick}">Тренажёр</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
+    };
 
-        if (state.mode === 'time' || state.mode === 'combo' || (state.mode === 'classic' && isCorrect)) {
-            document.getElementById('feedback').classList.add('hidden');
-            setTimeout(nextStep, 600);
-        } else {
-            document.getElementById('feedback').classList.remove('hidden');
-            document.getElementById('next-btn').classList.remove('hidden');
-        }
-    }
-
-    function nextStep() {
-        vibrate('tap');
-        state.index++;
-        renderWord();
-    }
-
-    function updateStats() {
-        document.getElementById('score-val').textContent = state.score;
-        document.getElementById('lives-box').textContent = '❤️'.repeat(Math.max(0, state.lives));
-    }
-
-    function finishGame() {
-        clearInterval(state.timer);
-        switchGameScreen('screen-results');
-        
-        let acc = state.index === 0 ? 0 : Math.round((state.correct / state.index) * 100);
-        document.getElementById('res-score').textContent = state.score;
-        document.getElementById('res-acc').textContent = acc + "%";
-        
-        let rank = "C";
-        if (acc > 95 && state.score > 100) rank = "S+";
-        else if (acc > 90) rank = "S";
-        else if (acc > 80) rank = "A";
-        else if (acc > 60) rank = "B";
-        
-        document.getElementById('res-rank').textContent = rank;
-        document.getElementById('res-status').textContent = state.lives <= 0 || (state.mode==='combo'&&acc<100) ? "Игра окончена" : "Время вышло!";
-        
-        let key = `prePri_${state.mode}`;
-        let lastBest = localStorage.getItem(key) || 0;
-        if(state.score > lastBest) localStorage.setItem(key, state.score);
-    }
-
-    function switchGameScreen(id) {
-        ['screen-menu', 'screen-game', 'screen-results'].forEach(s => document.getElementById(s).classList.add('hidden'));
-        document.getElementById(id).classList.remove('hidden');
-
-        // Управление видимостью верхних кнопок "Назад/Выход"
-        if (id === 'screen-menu') {
-            document.getElementById('back-to-analytics').classList.remove('hidden');
-            document.getElementById('exit-game').classList.add('hidden');
-        } else if (id === 'screen-game') {
-            document.getElementById('back-to-analytics').classList.add('hidden');
-            document.getElementById('exit-game').classList.remove('hidden');
-        } else {
-            document.getElementById('back-to-analytics').classList.add('hidden');
-            document.getElementById('exit-game').classList.add('hidden');
-        }
-    }
+    // Initialize App
+    window.addEventListener('DOMContentLoaded', () => {
+        AppUI.init();
+    });
 
 </script>
 </body>
